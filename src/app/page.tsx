@@ -30,6 +30,8 @@ import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
 import { FaSatellite, FaQrcode } from 'react-icons/fa'
 import { brandColors } from '@/theme'
 import { useTranslation } from '@/hooks/useTranslation'
+import { OnboardingProgress, OnboardingStep } from '@/components/OnboardingProgress'
+import { setupSafeWithSessionKey } from '@/lib/safeActions'
 
 interface SessionKey {
   sessionKeyAddress: string
@@ -44,7 +46,7 @@ interface SessionKey {
 }
 
 export default function PaymentPage() {
-  const { isAuthenticated, user, deriveWallet, login } = useW3PK()
+  const { isAuthenticated, user, deriveWallet, login, signMessage } = useW3PK()
   const t = useTranslation()
 
   // State
@@ -64,6 +66,11 @@ export default function PaymentPage() {
   const [recipient, setRecipient] = useState('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')
   const [amount, setAmount] = useState('1')
   const [paymentRequestDetected, setPaymentRequestDetected] = useState(false)
+
+  // Onboarding state
+  const [isOnboarding, setIsOnboarding] = useState(false)
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('deploying-safe')
+  const [onboardingError, setOnboardingError] = useState<string | undefined>()
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
   const onRequestModalOpen = () => setIsRequestModalOpen(true)
@@ -201,6 +208,60 @@ export default function PaymentPage() {
     ? Date.now() > sessionKey.permissions.validUntil * 1000
     : false
 
+  // Function to start automatic onboarding
+  const startOnboarding = async () => {
+    if (!user || !deriveWallet || !signMessage) return
+
+    try {
+      setOnboardingStep('deploying-safe')
+      setOnboardingError(undefined)
+
+      const result = await setupSafeWithSessionKey(
+        {
+          userId: user.id,
+          chainId: 10200,
+          deriveWallet,
+          signMessage,
+        },
+        {
+          onDeploying: () => {
+            setOnboardingStep('deploying-safe')
+          },
+          onDeployed: (deployResult) => {
+            setOnboardingStep('safe-deployed')
+            setSafeAddress(deployResult.safeAddress)
+          },
+          onEnablingModule: () => {
+            setOnboardingStep('enabling-module')
+          },
+          onModuleEnabled: () => {
+            setOnboardingStep('module-enabled')
+          },
+          onCreatingSessionKey: () => {
+            setOnboardingStep('creating-session-key')
+          },
+          onSessionKeyCreated: (key) => {
+            setOnboardingStep('session-key-created')
+            setSessionKey(key)
+          },
+          onError: (error) => {
+            setOnboardingError(error)
+          },
+        }
+      )
+
+      if (result.success) {
+        setOnboardingStep('complete')
+        // Wait a moment to show the complete state
+        setTimeout(() => {
+          setIsOnboarding(false)
+        }, 2000)
+      }
+    } catch (error: any) {
+      setOnboardingError(error.message || 'An error occurred during setup')
+    }
+  }
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -210,27 +271,36 @@ export default function PaymentPage() {
     }
   }, [])
 
-  // Load saved Safe data from localStorage
+  // Load saved Safe data from localStorage and trigger onboarding if needed
   useEffect(() => {
-    if (isAuthenticated && user && user.ethereumAddress) {
-      const saved = localStorage.getItem(`safe_${user.id}`)
-      if (saved) {
-        const data = JSON.parse(saved)
-        setSafeAddress(data.safeAddress)
-        if (data.sessionKey) {
-          setSessionKey(data.sessionKey)
+    const loadSafeData = async () => {
+      if (isAuthenticated && user) {
+        const saved = localStorage.getItem(`safe_${user.id}`)
+        if (saved) {
+          const data = JSON.parse(saved)
+          setSafeAddress(data.safeAddress)
+          if (data.sessionKey) {
+            setSessionKey(data.sessionKey)
+          }
+        } else {
+          // No Safe found - trigger automatic onboarding
+          setIsOnboarding(true)
+          await startOnboarding()
+        }
+
+        // Derive the owner wallet address (STANDARD + OWNER)
+        const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
+        setUserAddress(ownerWallet.address)
+
+        const safeData = SafeStorage.getSafeData(ownerWallet.address, 10200)
+        if (safeData?.deploymentBlockNumber) {
+          setDeploymentBlock(safeData.deploymentBlockNumber)
         }
       }
-
-      // Using user.ethereumAddress directly
-      const userAddr = user.ethereumAddress
-      setUserAddress(userAddr)
-
-      const safeData = SafeStorage.getSafeData(userAddr, 10200)
-      if (safeData?.deploymentBlockNumber) {
-        setDeploymentBlock(safeData.deploymentBlockNumber)
-      }
     }
+
+    loadSafeData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user])
 
   useEffect(() => {
@@ -469,7 +539,7 @@ export default function PaymentPage() {
   }, [safeAddress])
 
   const getTxBaseUrl = () => {
-    if (typeof window === 'undefined') return 'https://w3pk.w3hc.org/'
+    if (typeof window === 'undefined') return 'https://shebam.w3hc.org/'
 
     // Check if we're in development (localhost)
     if (
@@ -481,7 +551,7 @@ export default function PaymentPage() {
     }
 
     // Otherwise, assume production
-    return 'https://w3pk.w3hc.org/'
+    return 'https://shebam.w3hc.org/'
   }
 
   const generatePaymentRequestUrl = (
@@ -580,23 +650,49 @@ export default function PaymentPage() {
         throw new Error('User address not available')
       }
 
-      // Derive the session key wallet to sign the transaction (using YOLO mode)
-      const sessionKeyWallet = await deriveWallet('YOLO', 'BONUS')
+      // Sign transaction with session key using STANDARD mode
+      // STANDARD mode provides convenience without exposing private keys
+      const message = JSON.stringify(txData)
+      const sessionKeySignature = await signMessage(message, {
+        mode: 'STANDARD',
+        tag: 'USER',
+        signingMethod: 'EIP191', // Use EIP-191 for session key authorization
+      })
 
-      if (!sessionKeyWallet.privateKey) {
-        throw new Error('Session key private key not available')
+      if (!sessionKeySignature) {
+        throw new Error('Failed to sign transaction with session key')
       }
 
-      // Sign with the session key's private key
-      const message = JSON.stringify(txData)
-      const sessionKeySigner = new ethers.Wallet(sessionKeyWallet.privateKey)
-      const signature = await sessionKeySigner.signMessage(message)
+      // Get owner wallet address
+      const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
 
-      // Get derived wallet for signing (using YOLO mode with SHEBAM tag)
-      const wallet0 = await deriveWallet('YOLO', 'SHEBAM')
+      // Get the Safe transaction hash to sign with owner
+      const hashResponse = await fetch('/api/safe/get-tx-hash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          safeAddress,
+          to: EURO_TOKEN_ADDRESS,
+          data: transferData,
+          value: '0',
+          chainId: 10200,
+        }),
+      })
 
-      if (!wallet0.privateKey) {
-        throw new Error('Owner wallet private key not available')
+      const hashData = await hashResponse.json()
+      if (!hashData.success) {
+        throw new Error(hashData.error || 'Failed to get transaction hash')
+      }
+
+      // Sign the Safe transaction hash with OWNER wallet
+      const ownerSignature = await signMessage(hashData.txHash, {
+        mode: 'STANDARD',
+        tag: 'OWNER',
+        signingMethod: 'rawHash',
+      })
+
+      if (!ownerSignature) {
+        throw new Error('Failed to sign transaction hash with owner wallet')
       }
 
       // Try WebSocket mode first, fall back to sync mode
@@ -604,15 +700,15 @@ export default function PaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userAddress: wallet0.address,
+          ownerAddress: ownerWallet.address,
           safeAddress,
           chainId: 10200,
           to: recipient,
           amount: transferAmount, // Send the EUR token amount
           sessionKeyAddress: sessionKey.sessionKeyAddress,
           sessionKeyValidUntil: sessionKey.permissions.validUntil,
-          userPrivateKey: wallet0.privateKey,
-          signature,
+          sessionKeySignature, // Session key signature for validation
+          ownerSignature, // Owner signature for Safe transaction
           useWebSocket: true, // Request WebSocket mode
         }),
       })
@@ -635,9 +731,6 @@ export default function PaymentPage() {
               description: `Verified in ${update.duration?.toFixed(2)}s`,
               type: 'success',
               duration: 4000,
-              // containerStyle: {
-              //   bg: 'green.500',
-              // },
             })
 
             if (window.history && window.history.replaceState) {
@@ -674,16 +767,6 @@ export default function PaymentPage() {
             // Start showing refetch loader
             setIsRefetchingAfterConfirmation(true)
           } else if (update.status === 'confirmed') {
-            // toast({
-            //   title: '✅ Settled!',
-            //   description: `Settled onchain in ${update.duration?.toFixed(2)}s.\nTx hash: ${update.txHash?.slice(0, 10) || 'N/A'}...`,
-            //   status: 'info',
-            //   duration: 5000,
-            //   // containerStyle: {
-            //   //   bg: 'green.500',
-            //   // },
-            // })
-
             // Update the pending transaction to 'confirmed' status
             setPendingTransactions(prev =>
               prev.map(tx =>
@@ -746,18 +829,6 @@ export default function PaymentPage() {
         }
 
         setIsSending(false)
-
-        if (data.durations?.confirmed && data.txHash) {
-          // toast({
-          //   title: '✅ Settled!',
-          //   description: `Settled onchain in ${data.durations.confirmed.toFixed(2)}s. \nTx hash: ${data.txHash?.slice(0, 10) || 'N/A'}...`,
-          //   status: 'info',
-          //   duration: 5000,
-          //   // containerStyle: {
-          //   //   bg: 'green.500',
-          //   // },
-          // })
-        }
 
         // Clear form and reload balance and transactions
         setRecipient('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')
@@ -843,7 +914,13 @@ export default function PaymentPage() {
     )
   }
 
+  // Show onboarding progress if setting up Safe for first time
+  if (isOnboarding) {
+    return <OnboardingProgress currentStep={onboardingStep} error={onboardingError} />
+  }
+
   if (!safeAddress) {
+    // This should rarely be shown now since onboarding is automatic
     return (
       <Container maxW="container.md" py={20}>
         <Box textAlign="center">
@@ -868,11 +945,22 @@ export default function PaymentPage() {
     <Container maxW="container.md" py={20}>
       <VStack gap={8} align="stretch">
         {/* Header */}
-        <Box textAlign="center">
-          <Heading as="h1" size="xl" mb={2}>
-            Payment
-          </Heading>
-          <Text color="gray.400">Send and receive EUR</Text>
+        <Box>
+          <Text>
+            {t.header.intro}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.faster}
+            </Text>{' '}
+            {t.header.and}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.cheaper}
+            </Text>{' '}
+            {t.header.thanAnyExisting}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.legallyRegulated}
+            </Text>
+            {t.header.testNetwork}
+          </Text>
         </Box>
 
         {/* Send Block */}
@@ -964,8 +1052,9 @@ export default function PaymentPage() {
                 value={amount}
                 onValueChange={e => setAmount(e.value)}
                 min={0}
-                step={0.001}
+                step={1}
                 disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
+                width="full"
               >
                 <NumberInput.Field
                   type="text"
@@ -985,7 +1074,7 @@ export default function PaymentPage() {
               )}
             </Field>
 
-            <HStack gap={4}>
+            <HStack gap={4} justify="space-between">
               <Button
                 bg={brandColors.accent}
                 color="white"
@@ -1000,11 +1089,9 @@ export default function PaymentPage() {
               </Button>
               {!paymentRequestDetected && (
                 <Button
-                  bg={brandColors.primary}
-                  color="white"
-                  _hover={{ bg: brandColors.secondary }}
                   variant="outline"
-                  size="sm"
+                  size="lg"
+                  borderColor={brandColors.primary}
                   onClick={onRequestModalOpen}
                   disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
                 >
@@ -1114,11 +1201,11 @@ export default function PaymentPage() {
                         value={requestAmount}
                         onValueChange={e => setRequestAmount(e.value)}
                         min={0}
-                        step={0.001}
+                        step={1}
                       >
                         <NumberInput.Field
                           type="text"
-                          placeholder="0.00"
+                          placeholder="0"
                           fontFamily="mono"
                           onWheel={(e: any) => e.currentTarget.blur()}
                         />
@@ -1154,72 +1241,76 @@ export default function PaymentPage() {
                 )}
               </Dialog.Body>
 
-              <Dialog.Footer pt={{ base: 2, md: 4 }} gap={2} flexWrap="wrap">
+              <Dialog.Footer pt={{ base: 2, md: 4 }}>
                 {!isQRGenerated ? (
-                  <>
-                    <Button
-                      bg="blue.600"
-                      color="white"
-                      _hover={{ bg: 'blue.500' }}
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleRequestPayment}
-                      disabled={!requestAmount || parseFloat(requestAmount) <= 0}
-                    >
-                      <FaQrcode />
-                      Generate QR
-                    </Button>
-
-                    {isWebNFCSupported ? (
+                  <VStack align="stretch" width="full" gap={2}>
+                    <HStack gap={2} justify="flex-start">
                       <Button
-                        bg="green.600"
+                        bg={brandColors.accent}
                         color="white"
-                        _hover={{ bg: 'green.500' }}
+                        _hover={{ bg: brandColors.accent, opacity: 0.8 }}
                         size={{ base: 'sm', md: 'md' }}
-                        onClick={() => {
-                          if (!safeAddress || !requestAmount) return
-                          try {
-                            const amountInWei = ethers.parseEther(requestAmount).toString()
-                            const paymentUrl = generatePaymentRequestUrl(
-                              safeAddress,
-                              amountInWei,
-                              EURO_TOKEN_ADDRESS
-                            )
-                            writeNFC(paymentUrl)
-                          } catch (err) {
-                            toaster.create({
-                              title: 'Invalid Amount',
-                              description: 'Please enter a valid EUR amount.',
-                              type: 'error',
-                              duration: 3000,
-                            })
-                          }
-                        }}
+                        onClick={handleRequestPayment}
                         disabled={!requestAmount || parseFloat(requestAmount) <= 0}
                       >
-                        <FaSatellite />
-                        Write to NFC
+                        <FaQrcode />
+                        Generate QR
                       </Button>
-                    ) : (
-                      <Tooltip
-                        content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
-                        showArrow={true}
-                      >
-                        <span>
-                          <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
-                            NFC Not Available
-                          </Button>
-                        </span>
-                      </Tooltip>
-                    )}
 
-                    <Button
-                      variant="ghost"
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleRequestModalClose}
-                    >
-                      Close
-                    </Button>
-                  </>
+                      {isWebNFCSupported ? (
+                        <Button
+                          bg="green.600"
+                          color="white"
+                          _hover={{ bg: 'green.500' }}
+                          size={{ base: 'sm', md: 'md' }}
+                          onClick={() => {
+                            if (!safeAddress || !requestAmount) return
+                            try {
+                              const amountInWei = ethers.parseEther(requestAmount).toString()
+                              const paymentUrl = generatePaymentRequestUrl(
+                                safeAddress,
+                                amountInWei,
+                                EURO_TOKEN_ADDRESS
+                              )
+                              writeNFC(paymentUrl)
+                            } catch (err) {
+                              toaster.create({
+                                title: 'Invalid Amount',
+                                description: 'Please enter a valid EUR amount.',
+                                type: 'error',
+                                duration: 3000,
+                              })
+                            }
+                          }}
+                          disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                        >
+                          <FaSatellite />
+                          Write to NFC
+                        </Button>
+                      ) : (
+                        <Tooltip
+                          content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
+                          showArrow={true}
+                        >
+                          <span>
+                            <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
+                              NFC Not Available
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </HStack>
+
+                    <HStack justify="flex-end">
+                      <Button
+                        variant="ghost"
+                        size={{ base: 'sm', md: 'md' }}
+                        onClick={handleRequestModalClose}
+                      >
+                        Close
+                      </Button>
+                    </HStack>
+                  </VStack>
                 ) : (
                   <Button
                     bg={brandColors.accent}

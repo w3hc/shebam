@@ -12,34 +12,34 @@ const SMART_SESSIONS_MODULE = '0x00000000008bDABA73cD9815d79069c247Eb4bDA'
 /**
  * POST /api/safe/send-tx
  * Send gasless transaction from Safe wallet (relayer pays fees)
- * Body: { userAddress, safeAddress, chainId, to, amount, sessionKeyAddress, signature, userPrivateKey }
+ * Body: { ownerAddress, safeAddress, chainId, to, amount, sessionKeyAddress, signature }
  */
 
 interface TransactionParams {
   txId: string
-  userAddress: string
+  ownerAddress: string
   safeAddress: string
   chainId: number
   to: string
   amount: string
   sessionKeyAddress: string
-  signature: string
+  sessionKeySignature: string
+  ownerSignature: string
   sessionKeyValidUntil?: number
-  userPrivateKey: string
 }
 
 async function processTransactionSync(params: TransactionParams) {
   const {
     txId,
-    userAddress,
+    ownerAddress,
     safeAddress,
     chainId,
     to,
     amount,
     sessionKeyAddress,
-    signature,
+    sessionKeySignature,
+    ownerSignature,
     sessionKeyValidUntil,
-    userPrivateKey,
   } = params
 
   const statusTimestamps: {
@@ -112,7 +112,7 @@ async function processTransactionSync(params: TransactionParams) {
       data: transferData, // ERC-20 transfer call
     }
     const message = JSON.stringify(txData)
-    const recoveredAddress = ethers.verifyMessage(message, signature)
+    const recoveredAddress = ethers.verifyMessage(message, sessionKeySignature)
 
     if (recoveredAddress.toLowerCase() !== sessionKeyAddress.toLowerCase()) {
       return {
@@ -122,15 +122,16 @@ async function processTransactionSync(params: TransactionParams) {
       }
     }
 
-    console.log(`✅ Signature verified from session key ${sessionKeyAddress}`)
+    console.log(`✅ Session key signature verified from ${sessionKeyAddress}`)
 
-    const userProtocolKit = await Safe.init({
+    // Use relayer to check module status (read-only operation)
+    const protocolKit = await Safe.init({
       provider: rpcUrl,
-      signer: userPrivateKey,
+      signer: process.env.RELAYER_PRIVATE_KEY!,
       safeAddress: safeAddress,
     })
 
-    const isModuleEnabled = await userProtocolKit.isModuleEnabled(SMART_SESSIONS_MODULE)
+    const isModuleEnabled = await protocolKit.isModuleEnabled(SMART_SESSIONS_MODULE)
 
     if (isModuleEnabled) {
       console.log(`✅ Smart Sessions module is enabled on-chain`)
@@ -161,7 +162,9 @@ async function processTransactionSync(params: TransactionParams) {
     statusTimestamps.verified = Date.now()
     const verifiedDuration = (statusTimestamps.verified - statusTimestamps.started) / 1000
 
-    const safeTransaction = await userProtocolKit.createTransaction({
+    // Create Safe transaction
+    // Session key signature was already verified above
+    const safeTransaction = await protocolKit.createTransaction({
       transactions: [
         {
           to: EURO_TOKEN_ADDRESS, // Send to token contract
@@ -171,16 +174,21 @@ async function processTransactionSync(params: TransactionParams) {
       ],
     })
 
-    const signedSafeTx = await userProtocolKit.signTransaction(safeTransaction)
-    console.log(`   Transaction signed by user (owner)`)
+    // Add the owner's signature to the transaction
+    const signedSafeTx = await protocolKit.copyTransaction(safeTransaction)
 
-    const relayerProtocolKit = await Safe.init({
-      provider: rpcUrl,
-      signer: process.env.RELAYER_PRIVATE_KEY!,
-      safeAddress: safeAddress,
-    })
+    const safeSignature = {
+      signer: ownerAddress,
+      data: ownerSignature,
+      isContractSignature: false,
+      staticPart: () => ownerSignature,
+      dynamicPart: () => '',
+    }
 
-    const executeTxResponse = await relayerProtocolKit.executeTransaction(signedSafeTx)
+    signedSafeTx.addSignature(safeSignature as any)
+    console.log(`   Transaction signed by owner ${ownerAddress}`)
+
+    const executeTxResponse = await protocolKit.executeTransaction(signedSafeTx)
 
     let txHash: string | undefined
 
@@ -235,15 +243,15 @@ async function processTransactionSync(params: TransactionParams) {
 async function processTransaction(params: TransactionParams) {
   const {
     txId,
-    userAddress,
+    ownerAddress,
     safeAddress,
     chainId,
     to,
     amount,
     sessionKeyAddress,
-    signature,
+    sessionKeySignature,
+    ownerSignature,
     sessionKeyValidUntil,
-    userPrivateKey,
   } = params
 
   const statusTimestamps: {
@@ -273,7 +281,8 @@ async function processTransaction(params: TransactionParams) {
     console.log(`   Amount type: ${typeof amount}`)
     console.log(`   Chain: ${chainId}`)
     console.log(`   Session key: ${sessionKeyAddress}`)
-    console.log(`   Signature provided: ${signature ? 'Yes' : 'No'}`)
+    console.log(`   Session key signature provided: ${sessionKeySignature ? 'Yes' : 'No'}`)
+    console.log(`   Owner signature provided: ${ownerSignature ? 'Yes' : 'No'}`)
 
     // Validate amount
     const amountBigInt = BigInt(amount)
@@ -326,7 +335,7 @@ async function processTransaction(params: TransactionParams) {
       data: transferData, // ERC-20 transfer call
     }
     const message = JSON.stringify(txData)
-    const recoveredAddress = ethers.verifyMessage(message, signature)
+    const recoveredAddress = ethers.verifyMessage(message, sessionKeySignature)
 
     if (recoveredAddress.toLowerCase() !== sessionKeyAddress.toLowerCase()) {
       sendTransactionStatus(txId, 'started', {
@@ -336,17 +345,18 @@ async function processTransaction(params: TransactionParams) {
       return
     }
 
-    console.log(`✅ Signature verified from session key ${sessionKeyAddress}`)
+    console.log(`✅ Session key signature verified from ${sessionKeyAddress}`)
 
     // Check if Smart Sessions module is enabled on-chain
     try {
-      const userProtocolKit = await Safe.init({
+      // Use relayer to check module status and execute transaction
+      const protocolKit = await Safe.init({
         provider: rpcUrl,
-        signer: userPrivateKey,
+        signer: process.env.RELAYER_PRIVATE_KEY!,
         safeAddress: safeAddress,
       })
 
-      const isModuleEnabled = await userProtocolKit.isModuleEnabled(SMART_SESSIONS_MODULE)
+      const isModuleEnabled = await protocolKit.isModuleEnabled(SMART_SESSIONS_MODULE)
 
       if (isModuleEnabled) {
         console.log(`✅ Smart Sessions module is enabled on-chain`)
@@ -409,7 +419,8 @@ async function processTransaction(params: TransactionParams) {
       })
 
       // Create Safe transaction with ERC-20 transfer
-      const safeTransaction = await userProtocolKit.createTransaction({
+      // Session key signature was already verified above
+      const safeTransaction = await protocolKit.createTransaction({
         transactions: [
           {
             to: EURO_TOKEN_ADDRESS, // Send to token contract
@@ -419,18 +430,22 @@ async function processTransaction(params: TransactionParams) {
         ],
       })
 
-      // Sign with user (the owner)
-      const signedSafeTx = await userProtocolKit.signTransaction(safeTransaction)
-      console.log(`   Transaction signed by user (owner)`)
+      // Add the owner's signature to the transaction
+      const signedSafeTx = await protocolKit.copyTransaction(safeTransaction)
 
-      // Execute transaction (relayer pays gas, user signed)
-      const relayerProtocolKit = await Safe.init({
-        provider: rpcUrl,
-        signer: process.env.RELAYER_PRIVATE_KEY!,
-        safeAddress: safeAddress,
-      })
+      const safeSignature = {
+        signer: ownerAddress,
+        data: ownerSignature,
+        isContractSignature: false,
+        staticPart: () => ownerSignature,
+        dynamicPart: () => '',
+      }
 
-      const executeTxResponse = await relayerProtocolKit.executeTransaction(signedSafeTx)
+      signedSafeTx.addSignature(safeSignature as any)
+      console.log(`   Transaction signed by owner ${ownerAddress}`)
+
+      // Execute transaction (relayer pays gas)
+      const executeTxResponse = await protocolKit.executeTransaction(signedSafeTx)
 
       // Get transaction hash from the response
       let txHash: string | undefined
@@ -493,30 +508,30 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
-      userAddress,
+      ownerAddress,
       safeAddress,
       chainId,
       to,
       amount,
       sessionKeyAddress,
-      signature,
+      sessionKeySignature,
+      ownerSignature,
       sessionKeyValidUntil,
-      userPrivateKey,
       useWebSocket, // Optional: frontend can explicitly request WebSocket mode
     } = body
 
     // Validation
-    if (!userAddress || !safeAddress || !chainId || !to || !amount || !sessionKeyAddress) {
+    if (!ownerAddress || !safeAddress || !chainId || !to || !amount || !sessionKeyAddress) {
       return NextResponse.json(
         {
           error:
-            'Missing required fields: userAddress, safeAddress, chainId, to, amount, sessionKeyAddress',
+            'Missing required fields: ownerAddress, safeAddress, chainId, to, amount, sessionKeyAddress',
         },
         { status: 400 }
       )
     }
 
-    if (!signature) {
+    if (!sessionKeySignature) {
       return NextResponse.json(
         {
           error:
@@ -526,24 +541,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!ownerSignature) {
+      return NextResponse.json(
+        {
+          error: 'Owner signature required. The Safe owner must sign the transaction hash.',
+        },
+        { status: 400 }
+      )
+    }
+
     // Validate addresses
     if (
       !/^0x[a-fA-F0-9]{40}$/.test(safeAddress) ||
       !/^0x[a-fA-F0-9]{40}$/.test(to) ||
-      !/^0x[a-fA-F0-9]{40}$/.test(sessionKeyAddress)
+      !/^0x[a-fA-F0-9]{40}$/.test(sessionKeyAddress) ||
+      !/^0x[a-fA-F0-9]{40}$/.test(ownerAddress)
     ) {
       return NextResponse.json({ error: 'Invalid Ethereum address' }, { status: 400 })
-    }
-
-    if (!userPrivateKey) {
-      return NextResponse.json(
-        {
-          error: 'User private key required',
-          details:
-            'The user must provide their private key to sign this transaction as the Safe owner',
-        },
-        { status: 400 }
-      )
     }
 
     // Check if WebSocket is available (check if server has WebSocket support)
@@ -564,15 +578,15 @@ export async function POST(request: NextRequest) {
       setTimeout(() => {
         processTransaction({
           txId,
-          userAddress,
+          ownerAddress,
           safeAddress,
           chainId,
           to,
           amount,
           sessionKeyAddress,
-          signature,
+          sessionKeySignature,
+          ownerSignature,
           sessionKeyValidUntil,
-          userPrivateKey,
         })
       }, 100) // 100ms delay to allow WebSocket connection
 
@@ -592,15 +606,15 @@ export async function POST(request: NextRequest) {
     console.log('Processing transaction synchronously (no WebSocket)')
     const result = await processTransactionSync({
       txId,
-      userAddress,
+      ownerAddress,
       safeAddress,
       chainId,
       to,
       amount,
       sessionKeyAddress,
-      signature,
+      sessionKeySignature,
+      ownerSignature,
       sessionKeyValidUntil,
-      userPrivateKey,
     })
 
     return NextResponse.json(result, { status: result.success ? 200 : 400 })

@@ -80,6 +80,17 @@ interface StealthAddressResult {
   viewTag: string
 }
 
+// Signing options
+type SigningMethod = 'EIP191' | 'rawHash'
+type SecurityMode = 'STANDARD' | 'STRICT' | 'YOLO'
+
+interface SignMessageOptions {
+  mode?: SecurityMode // Security mode: STANDARD, STRICT, or YOLO
+  tag?: string // Tag for derivation (default: 'MAIN')
+  requireAuth?: boolean // Force fresh authentication
+  signingMethod?: SigningMethod // Signing method: EIP191 or rawHash
+}
+
 interface W3pkType {
   isAuthenticated: boolean
   user: W3pkUser | null
@@ -87,7 +98,7 @@ interface W3pkType {
   login: () => Promise<void>
   register: (username: string) => Promise<void>
   logout: () => void
-  signMessage: (message: string) => Promise<string | null>
+  signMessage: (message: string, options?: SignMessageOptions) => Promise<string | null>
   deriveWallet: (mode?: string, tag?: string) => Promise<DerivedWallet>
   getAddress: (mode?: string, tag?: string) => Promise<string>
   getBackupStatus: () => Promise<BackupStatus>
@@ -337,13 +348,13 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
 
       console.log('[W3PK] Registration successful')
 
-      toaster.create({
-        title: 'Done! 🎉',
-        description:
-          "Your encrypted wallet has been created and stored on your device. Don't forget to back it up!",
-        type: 'success',
-        duration: 3000,
-      })
+      // toaster.create({
+      //   title: 'Done! 🎉',
+      //   description:
+      //     "Your encrypted wallet has been created and stored on your device. Don't forget to back it up!",
+      //   type: 'success',
+      //   duration: 3000,
+      // })
     } catch (error) {
       console.error('[W3PK] Registration failed:', error)
 
@@ -420,7 +431,10 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
     await w3pk.login()
   }, [w3pk])
 
-  const signMessage = async (message: string): Promise<string | null> => {
+  const signMessage = async (
+    message: string,
+    options?: SignMessageOptions
+  ): Promise<string | null> => {
     if (!user) {
       toaster.create({
         title: 'Not Authenticated',
@@ -433,10 +447,33 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
 
     try {
       await ensureAuthentication()
-      const result = await w3pk.signMessage(message)
+
+      // Build w3pk signMessage options
+      const w3pkOptions: any = {}
+
+      if (options?.mode) {
+        w3pkOptions.mode = options.mode
+      }
+
+      if (options?.tag) {
+        w3pkOptions.tag = options.tag
+      }
+
+      if (options?.requireAuth !== undefined) {
+        w3pkOptions.requireAuth = options.requireAuth
+      }
+
+      if (options?.signingMethod) {
+        w3pkOptions.signingMethod = options.signingMethod
+      }
+
+      const result = await w3pk.signMessage(message, w3pkOptions)
 
       // Extend session after successful operation for better UX
-      w3pk.extendSession()
+      // Note: STRICT mode sessions are never persisted
+      if (options?.mode !== 'STRICT') {
+        w3pk.extendSession()
+      }
 
       return result.signature
     } catch (error) {

@@ -24,6 +24,28 @@ type TranslationKeys = {
     title: string
     loginRequired: string
   }
+  header: {
+    intro: string
+    faster: string
+    and: string
+    cheaper: string
+    thanAnyExisting: string
+    onchainEuro: string
+    legallyRegulated: string
+    testNetwork: string
+    mainNetwork: string
+  }
+  onboarding: {
+    settingUp: string
+    deployingSafe: string
+    safeDeployed: string
+    enablingModule: string
+    moduleEnabled: string
+    creatingSessionKey: string
+    sessionKeyCreated: string
+    complete: string
+    error: string
+  }
 }
 
 // Define translations for each supported language
@@ -43,8 +65,8 @@ export const translations: Translations = {
     home: {
       title: 'Welcome!',
       subtitle: "It's a pleasure to have you here!",
-      greeting: 'Hello Anon!',
-      greetingSubtitle: 'Sit back, relax, and build something cool!',
+      greeting: 'Welcome!',
+      greetingSubtitle: 'Relax and enjoy life!',
     },
     navigation: {
       settings: 'Settings',
@@ -52,6 +74,30 @@ export const translations: Translations = {
     settings: {
       title: 'Settings',
       loginRequired: 'Please login to access your settings',
+    },
+    header: {
+      intro: 'Shebam is',
+      faster: 'faster',
+      and: 'and',
+      cheaper: 'cheaper',
+      thanAnyExisting:
+        "than ANY existing payment system. We're using an onchain euro that is legally",
+      onchainEuro: 'onchain euro',
+      legallyRegulated: 'regulated',
+      testNetwork:
+        ". We're using a test network right now, but it will work exactly the same on the main network.",
+      mainNetwork: 'main network',
+    },
+    onboarding: {
+      settingUp: 'Setting up your account',
+      deployingSafe: 'Deploying your onchain Safe...',
+      safeDeployed: 'Onchain Safe deployed',
+      enablingModule: 'Enabling session key module...',
+      moduleEnabled: 'Session key module enabled',
+      creatingSessionKey: 'Creating session key...',
+      sessionKeyCreated: 'Session key created',
+      complete: 'Setup complete!',
+      error: 'An error occurred during setup',
     },
   },
 
@@ -66,8 +112,8 @@ export const translations: Translations = {
     home: {
       title: '欢迎！',
       subtitle: '很高兴您来到这里！',
-      greeting: '你好，匿名用户！',
-      greetingSubtitle: '坐下来，放松，创造一些很酷的东西！',
+      greeting: '欢迎！',
+      greetingSubtitle: '放松并享受生活！',
     },
     navigation: {
       settings: '设置',
@@ -75,6 +121,28 @@ export const translations: Translations = {
     settings: {
       title: '设置',
       loginRequired: '请登录以访问您的设置',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: '更快',
+      and: '且',
+      cheaper: '更便宜',
+      thanAnyExisting: '比任何现有的支付系统都要好。我们使用的是合法的',
+      onchainEuro: '链上欧元',
+      legallyRegulated: '受监管',
+      testNetwork: '。我们目前使用测试网络，但在主网络上运行方式完全相同。',
+      mainNetwork: '主网络',
+    },
+    onboarding: {
+      settingUp: '设置您的账户',
+      deployingSafe: '正在部署您的链上Safe...',
+      safeDeployed: '链上Safe已部署',
+      enablingModule: '正在启用会话密钥模块...',
+      moduleEnabled: '会话密钥模块已启用',
+      creatingSessionKey: '正在创建会话密钥...',
+      sessionKeyCreated: '会话密钥已创建',
+      complete: '设置完成！',
+      error: '设置过程中发生错误',
     },
   },
 
@@ -89,8 +157,8 @@ export const translations: Translations = {
     home: {
       title: 'स्वागत है!',
       subtitle: 'आपका यहाँ स्वागत है!',
-      greeting: 'नमस्ते मित्र!',
-      greetingSubtitle: 'आराम से बैठें और कुछ शानदार बनाएं!',
+      greeting: 'स्वागत है!',
+      greetingSubtitle: 'आराम करें और जीवन का आनंद लें!',
     },
     navigation: {
       settings: 'सेटिंग्स',
@@ -98,6 +166,29 @@ export const translations: Translations = {
     settings: {
       title: 'सेटिंग्स',
       loginRequired: 'अपनी सेटिंग्स एक्सेस करने के लिए कृपया लॉगिन करें',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: 'तेज़',
+      and: 'और',
+      cheaper: 'सस्ता',
+      thanAnyExisting: 'किसी भी मौजूदा भुगतान प्रणाली से बेहतर है। हम एक कानूनी रूप से',
+      onchainEuro: 'ऑनचेन यूरो',
+      legallyRegulated: 'विनियमित',
+      testNetwork:
+        'का उपयोग कर रहे हैं। हम अभी एक टेस्ट नेटवर्क का उपयोग कर रहे हैं, लेकिन यह मुख्य नेटवर्क पर भी बिल्कुल उसी तरह काम करेगा।',
+      mainNetwork: 'मुख्य नेटवर्क',
+    },
+    onboarding: {
+      settingUp: 'अपना खाता सेट अप करना',
+      deployingSafe: 'आपका ऑनचेन Safe तैनात किया जा रहा है...',
+      safeDeployed: 'ऑनचेन Safe तैनात हो गया',
+      enablingModule: 'सत्र कुंजी मॉड्यूल सक्षम किया जा रहा है...',
+      moduleEnabled: 'सत्र कुंजी मॉड्यूल सक्षम हो गया',
+      creatingSessionKey: 'सत्र कुंजी बनाई जा रही है...',
+      sessionKeyCreated: 'सत्र कुंजी बन गई',
+      complete: 'सेटअप पूर्ण हो गया!',
+      error: 'सेटअप के दौरान एक त्रुटि हुई',
     },
   },
 
@@ -112,8 +203,8 @@ export const translations: Translations = {
     home: {
       title: '¡Bienvenido!',
       subtitle: '¡Es un placer tenerte aquí!',
-      greeting: '¡Hola Anon!',
-      greetingSubtitle: '¡Siéntate, relájate y crea algo genial!',
+      greeting: '¡Bienvenido!',
+      greetingSubtitle: '¡Relájate y disfruta de la vida!',
     },
     navigation: {
       settings: 'Configuración',
@@ -121,6 +212,30 @@ export const translations: Translations = {
     settings: {
       title: 'Configuración',
       loginRequired: 'Por favor inicia sesión para acceder a tu configuración',
+    },
+    header: {
+      intro: 'Shebam es',
+      faster: 'más rápido',
+      and: 'y',
+      cheaper: 'más barato',
+      thanAnyExisting:
+        'que CUALQUIER sistema de pago existente. Estamos usando un euro en cadena que está legalmente',
+      onchainEuro: 'euro en cadena',
+      legallyRegulated: 'regulado',
+      testNetwork:
+        '. Estamos usando una red de prueba ahora, pero funcionará exactamente igual en la red principal.',
+      mainNetwork: 'red principal',
+    },
+    onboarding: {
+      settingUp: 'Configurando tu cuenta',
+      deployingSafe: 'Desplegando tu Safe en cadena...',
+      safeDeployed: 'Safe en cadena desplegada',
+      enablingModule: 'Habilitando módulo de clave de sesión...',
+      moduleEnabled: 'Módulo de clave de sesión habilitado',
+      creatingSessionKey: 'Creando clave de sesión...',
+      sessionKeyCreated: 'Clave de sesión creada',
+      complete: '¡Configuración completada!',
+      error: 'Ocurrió un error durante la configuración',
     },
   },
 
@@ -135,7 +250,7 @@ export const translations: Translations = {
     home: {
       title: 'Bienvenue !',
       subtitle: "C'est un plaisir de vous avoir ici !",
-      greeting: 'Bonjour !',
+      greeting: 'Bienvenue !',
       greetingSubtitle: 'Détendez-vous et profitez de la vie !',
     },
     navigation: {
@@ -144,6 +259,30 @@ export const translations: Translations = {
     settings: {
       title: 'Paramètres',
       loginRequired: 'Veuillez vous connecter pour accéder à vos paramètres',
+    },
+    header: {
+      intro: 'Shebam est',
+      faster: 'plus rapide',
+      and: 'et',
+      cheaper: 'moins cher',
+      thanAnyExisting:
+        "que N'IMPORTE QUEL système de paiement existant. Nous utilisons un euro onchain qui est légalement",
+      onchainEuro: 'euro en chaîne',
+      legallyRegulated: 'réglementé',
+      testNetwork:
+        '. Nous utilisons un réseau de test pour le moment, mais ça fonctionnera exactement de la même manière sur le réseau principal.',
+      mainNetwork: 'réseau principal',
+    },
+    onboarding: {
+      settingUp: 'Configuration de votre compte',
+      deployingSafe: 'Déploiement de votre Safe en chaîne...',
+      safeDeployed: 'Safe en chaîne déployé',
+      enablingModule: 'Activation du module de clé de session...',
+      moduleEnabled: 'Module de clé de session activé',
+      creatingSessionKey: 'Création de la clé de session...',
+      sessionKeyCreated: 'Clé de session créée',
+      complete: 'Configuration terminée !',
+      error: 'Une erreur est survenue lors de la configuration',
     },
   },
 
@@ -158,8 +297,8 @@ export const translations: Translations = {
     home: {
       title: 'مرحباً!',
       subtitle: 'يسعدنا وجودك هنا!',
-      greeting: 'مرحبا أيها المجهول!',
-      greetingSubtitle: 'استرخ وابنِ شيئاً رائعاً!',
+      greeting: 'مرحباً!',
+      greetingSubtitle: 'استرخ واستمتع بالحياة!',
     },
     navigation: {
       settings: 'الإعدادات',
@@ -167,6 +306,29 @@ export const translations: Translations = {
     settings: {
       title: 'الإعدادات',
       loginRequired: 'يرجى تسجيل الدخول للوصول إلى إعداداتك',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: 'أسرع',
+      and: 'و',
+      cheaper: 'أرخص',
+      thanAnyExisting: 'من أي نظام دفع موجود. نحن نستخدم يورو على السلسلة',
+      onchainEuro: 'يورو على السلسلة',
+      legallyRegulated: 'منظم قانونياً',
+      testNetwork:
+        '. نحن نستخدم شبكة تجريبية الآن، لكنها ستعمل بنفس الطريقة تماماً على الشبكة الرئيسية.',
+      mainNetwork: 'الشبكة الرئيسية',
+    },
+    onboarding: {
+      settingUp: 'إعداد حسابك',
+      deployingSafe: 'نشر Safe الخاص بك على السلسلة...',
+      safeDeployed: 'تم نشر Safe على السلسلة',
+      enablingModule: 'تمكين وحدة مفتاح الجلسة...',
+      moduleEnabled: 'تم تمكين وحدة مفتاح الجلسة',
+      creatingSessionKey: 'إنشاء مفتاح الجلسة...',
+      sessionKeyCreated: 'تم إنشاء مفتاح الجلسة',
+      complete: 'اكتمل الإعداد!',
+      error: 'حدث خطأ أثناء الإعداد',
     },
   },
 
@@ -181,8 +343,8 @@ export const translations: Translations = {
     home: {
       title: 'স্বাগতম!',
       subtitle: 'আপনাকে এখানে পেয়ে আনন্দিত!',
-      greeting: 'হ্যালো বন্ধু!',
-      greetingSubtitle: 'বসুন, আরাম করুন এবং কিছু দুর্দান্ত তৈরি করুন!',
+      greeting: 'স্বাগতম!',
+      greetingSubtitle: 'আরাম করুন এবং জীবন উপভোগ করুন!',
     },
     navigation: {
       settings: 'সেটিংস',
@@ -190,6 +352,29 @@ export const translations: Translations = {
     settings: {
       title: 'সেটিংস',
       loginRequired: 'আপনার সেটিংস অ্যাক্সেস করতে অনুগ্রহ করে লগইন করুন',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: 'দ্রুততর',
+      and: 'এবং',
+      cheaper: 'সস্তা',
+      thanAnyExisting: 'যেকোনো বিদ্যমান পেমেন্ট সিস্টেম থেকে ভালো। আমরা একটি আইনত',
+      onchainEuro: 'অনচেইন ইউরো',
+      legallyRegulated: 'নিয়ন্ত্রিত',
+      testNetwork:
+        'ব্যবহার করছি। আমরা এখন একটি টেস্ট নেটওয়ার্ক ব্যবহার করছি, তবে এটি প্রধান নেটওয়ার্কে ঠিক একইভাবে কাজ করবে।',
+      mainNetwork: 'প্রধান নেটওয়ার্ক',
+    },
+    onboarding: {
+      settingUp: 'আপনার অ্যাকাউন্ট সেট আপ করা হচ্ছে',
+      deployingSafe: 'আপনার অনচেইন Safe ডিপ্লয় করা হচ্ছে...',
+      safeDeployed: 'অনচেইন Safe ডিপ্লয় হয়েছে',
+      enablingModule: 'সেশন কী মডিউল সক্ষম করা হচ্ছে...',
+      moduleEnabled: 'সেশন কী মডিউল সক্ষম হয়েছে',
+      creatingSessionKey: 'সেশন কী তৈরি করা হচ্ছে...',
+      sessionKeyCreated: 'সেশন কী তৈরি হয়েছে',
+      complete: 'সেটআপ সম্পন্ন হয়েছে!',
+      error: 'সেটআপের সময় একটি ত্রুটি ঘটেছে',
     },
   },
 
@@ -204,8 +389,8 @@ export const translations: Translations = {
     home: {
       title: 'Добро пожаловать!',
       subtitle: 'Рады видеть вас здесь!',
-      greeting: 'Привет, незнакомец!',
-      greetingSubtitle: 'Расслабьтесь и создайте что-нибудь крутое!',
+      greeting: 'Добро пожаловать!',
+      greetingSubtitle: 'Расслабьтесь и наслаждайтесь жизнью!',
     },
     navigation: {
       settings: 'Настройки',
@@ -213,6 +398,30 @@ export const translations: Translations = {
     settings: {
       title: 'Настройки',
       loginRequired: 'Пожалуйста, войдите, чтобы получить доступ к настройкам',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: 'быстрее',
+      and: 'и',
+      cheaper: 'дешевле',
+      thanAnyExisting:
+        'чем ЛЮБАЯ существующая платежная система. Мы используем евро на блокчейне, которое законно',
+      onchainEuro: 'евро на блокчейне',
+      legallyRegulated: 'регулируется',
+      testNetwork:
+        '. Мы сейчас используем тестовую сеть, но в основной сети все будет работать точно так же.',
+      mainNetwork: 'основная сеть',
+    },
+    onboarding: {
+      settingUp: 'Настройка вашего аккаунта',
+      deployingSafe: 'Развертывание вашего Safe на блокчейне...',
+      safeDeployed: 'Safe на блокчейне развернут',
+      enablingModule: 'Включение модуля ключа сеанса...',
+      moduleEnabled: 'Модуль ключа сеанса включен',
+      creatingSessionKey: 'Создание ключа сеанса...',
+      sessionKeyCreated: 'Ключ сеанса создан',
+      complete: 'Настройка завершена!',
+      error: 'Произошла ошибка при настройке',
     },
   },
 
@@ -227,8 +436,8 @@ export const translations: Translations = {
     home: {
       title: 'Bem-vindo!',
       subtitle: 'É um prazer tê-lo aqui!',
-      greeting: 'Olá Anon!',
-      greetingSubtitle: 'Sente-se, relaxe e construa algo legal!',
+      greeting: 'Bem-vindo!',
+      greetingSubtitle: 'Relaxe e aproveite a vida!',
     },
     navigation: {
       settings: 'Configurações',
@@ -236,6 +445,30 @@ export const translations: Translations = {
     settings: {
       title: 'Configurações',
       loginRequired: 'Por favor faça login para acessar suas configurações',
+    },
+    header: {
+      intro: 'Shebam é',
+      faster: 'mais rápido',
+      and: 'e',
+      cheaper: 'mais barato',
+      thanAnyExisting:
+        'do que QUALQUER sistema de pagamento existente. Estamos usando um euro na blockchain que é legalmente',
+      onchainEuro: 'euro na blockchain',
+      legallyRegulated: 'regulamentado',
+      testNetwork:
+        '. Estamos usando uma rede de teste agora, mas funcionará exatamente da mesma forma na rede principal.',
+      mainNetwork: 'rede principal',
+    },
+    onboarding: {
+      settingUp: 'Configurando sua conta',
+      deployingSafe: 'Implantando sua Safe na blockchain...',
+      safeDeployed: 'Safe na blockchain implantada',
+      enablingModule: 'Habilitando módulo de chave de sessão...',
+      moduleEnabled: 'Módulo de chave de sessão habilitado',
+      creatingSessionKey: 'Criando chave de sessão...',
+      sessionKeyCreated: 'Chave de sessão criada',
+      complete: 'Configuração concluída!',
+      error: 'Ocorreu um erro durante a configuração',
     },
   },
 
@@ -250,8 +483,8 @@ export const translations: Translations = {
     home: {
       title: 'خوش آمدید!',
       subtitle: 'آپ کا یہاں ہونا خوشی کی بات ہے!',
-      greeting: 'ہیلو دوست!',
-      greetingSubtitle: 'آرام سے بیٹھیں اور کچھ شاندار بنائیں!',
+      greeting: 'خوش آمدید!',
+      greetingSubtitle: 'آرام کریں اور زندگی سے لطف اندوز ہوں!',
     },
     navigation: {
       settings: 'ترتیبات',
@@ -259,6 +492,30 @@ export const translations: Translations = {
     settings: {
       title: 'ترتیبات',
       loginRequired: 'اپنی ترتیبات تک رسائی کے لیے براہ کرم لاگ ان کریں',
+    },
+    header: {
+      intro: 'Shebam',
+      faster: 'تیز تر',
+      and: 'اور',
+      cheaper: 'سستا',
+      thanAnyExisting:
+        'کسی بھی موجودہ ادائیگی کے نظام سے بہتر ہے۔ ہم ایک آن چین یورو استعمال کر رہے ہیں جو قانونی طور پر',
+      onchainEuro: 'آن چین یورو',
+      legallyRegulated: 'منظم',
+      testNetwork:
+        'ہے۔ ہم ابھی ٹیسٹ نیٹ ورک استعمال کر رہے ہیں، لیکن یہ مرکزی نیٹ ورک پر بالکل اسی طرح کام کرے گا۔',
+      mainNetwork: 'مرکزی نیٹ ورک',
+    },
+    onboarding: {
+      settingUp: 'اپنا اکاؤنٹ سیٹ اپ کیا جا رہا ہے',
+      deployingSafe: 'آپ کا آن چین Safe تعینات کیا جا رہا ہے...',
+      safeDeployed: 'آن چین Safe تعینات ہو گیا',
+      enablingModule: 'سیشن کلید ماڈیول فعال کیا جا رہا ہے...',
+      moduleEnabled: 'سیشن کلید ماڈیول فعال ہو گیا',
+      creatingSessionKey: 'سیشن کلید بنائی جا رہی ہے...',
+      sessionKeyCreated: 'سیشن کلید بن گئی',
+      complete: 'سیٹ اپ مکمل ہو گیا!',
+      error: 'سیٹ اپ کے دوران ایک خرابی پیش آگئی',
     },
   },
 }
