@@ -20,18 +20,7 @@ import { ethers } from 'ethers'
 import { FiShield, FiKey, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
 import { brandColors } from '@/theme'
-
-interface SessionKey {
-  sessionKeyAddress: string
-  sessionKeyIndex: number
-  expiresAt: string
-  permissions: {
-    spendingLimit: string
-    allowedTokens: string[]
-    validAfter: number
-    validUntil: number
-  }
-}
+import { setupSafeWithSessionKey, SessionKey } from '@/lib/safeActions'
 
 type SetupStep = 'idle' | 'deploying' | 'enablingModule' | 'creatingSessionKey' | 'error'
 
@@ -46,10 +35,9 @@ export default function SafePage() {
   const [derivedAddresses, setDerivedAddresses] = useState<string[]>([])
   const [sessionKey, setSessionKey] = useState<SessionKey | null>(null)
   const [isDeploying, setIsDeploying] = useState(false)
-  const [isCreatingSession, setIsCreatingSession] = useState(false) // Can potentially be removed
+  const [isCreatingSession, setIsCreatingSession] = useState(false)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
-  const [isEnablingModule, setIsEnablingModule] = useState(false) // Can potentially be removed
-  const [moduleEnableTxData, setModuleEnableTxData] = useState<any>(null)
+  const [isEnablingModule, setIsEnablingModule] = useState(false)
   const [isMintingEUR, setIsMintingEUR] = useState(false)
 
   // New state for the combined setup flow - Explicitly typed
@@ -170,222 +158,80 @@ export default function SafePage() {
 
   const setupSafeAndSession = async () => {
     setCurrentSetupStep('deploying')
-    setIsDeploying(true) // Maintain existing state for UI elements like loadingText
+    setIsDeploying(true)
 
     try {
-      // Step 1: Deploy Safe
-      console.log('Step 1: Deploying Safe...')
-      // Use STANDARD mode for both owner and user wallets
+      // Derive addresses for UI display
       const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
       const userWallet = await deriveWallet('STANDARD', 'USER')
       setDerivedAddresses([ownerWallet.address, userWallet.address])
 
-      const deployResponse = await fetch('/api/safe/deploy-safe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userAddress: ownerWallet.address,
+      const result = await setupSafeWithSessionKey(
+        {
+          deriveWallet,
+          signMessage,
           chainId: 10200,
-        }),
-      })
-
-      const deployData = await deployResponse.json()
-
-      if (!deployData.success) {
-        throw new Error(deployData.error || 'Failed to deploy Safe')
-      }
-
-      const newSafeAddress = deployData.safeAddress
-      setSafeAddress(newSafeAddress)
-      setSafeOwner(ownerWallet.address)
-
-      // Save to localStorage
-      localStorage.setItem(
-        `safe_${user?.id}`,
-        JSON.stringify({
-          safeAddress: newSafeAddress,
-          safeOwner: ownerWallet.address,
-        })
+          userId: user?.id,
+        },
+        {
+          onDeploying: () => {
+            setCurrentSetupStep('deploying')
+            setIsDeploying(true)
+          },
+          onDeployed: (result) => {
+            setSafeAddress(result.safeAddress)
+            setSafeOwner(result.safeOwner)
+            toaster.create({
+              title: 'Safe Deployed!',
+              description: `Your Safe is ready at ${result.safeAddress.slice(0, 10)}...`,
+              type: 'success',
+              duration: 1000,
+            })
+            loadBalance()
+          },
+          onEnablingModule: () => {
+            setCurrentSetupStep('enablingModule')
+            setIsEnablingModule(true)
+          },
+          onModuleEnabled: () => {
+            toaster.create({
+              title: 'Module Enabled!',
+              description: 'Smart Sessions module is now enabled on your Safe',
+              type: 'success',
+              duration: 1000,
+            })
+          },
+          onCreatingSessionKey: () => {
+            setCurrentSetupStep('creatingSessionKey')
+            setIsCreatingSession(true)
+          },
+          onSessionKeyCreated: (sessionKey) => {
+            setSessionKey(sessionKey)
+            toaster.create({
+              title: 'Session Key Created!',
+              description: 'You can now send gasless transactions',
+              type: 'success',
+              duration: 5000,
+            })
+          },
+          onError: (error) => {
+            console.error('Setup error:', error)
+            setCurrentSetupStep('error')
+            toaster.create({
+              title: 'Setup Failed',
+              description: error,
+              type: 'error',
+              duration: 8000,
+            })
+          },
+        }
       )
 
-      toaster.create({
-        title: 'Safe Deployed!',
-        description: `Your Safe is ready at ${newSafeAddress.slice(0, 10)}...`,
-        type: 'success',
-        duration: 1000,
-      })
-
-      await loadBalance()
-
-      // Step 2: Create Session Key (this might require enabling the module)
-      console.log('Step 2: Creating Session Key...')
-      setCurrentSetupStep('creatingSessionKey')
-      setIsCreatingSession(true) // Maintain existing state for UI elements like loadingText
-
-      const sessionResponse = await fetch('/api/safe/create-session-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userAddress: ownerWallet.address,
-          safeAddress: newSafeAddress,
-          chainId: 10200,
-          sessionKeyAddress: userWallet.address, // Use USER wallet as session key
-          sessionKeyIndex: 1,
-        }),
-      })
-
-      const sessionData = await sessionResponse.json()
-
-      if (sessionData.requiresModuleEnable) {
-        // If module needs enabling, do it now
-        console.log('Module needs enabling...')
-        setModuleEnableTxData(sessionData.enableModuleTxData)
-        setCurrentSetupStep('enablingModule')
-        setIsEnablingModule(true) // Maintain existing state for UI elements like loadingText
-
-        // Step 1: Get the Safe transaction hash from the server
-        console.log('Getting Safe transaction hash to sign...')
-
-        const hashResponse = await fetch('/api/safe/get-tx-hash', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            safeAddress: newSafeAddress,
-            to: sessionData.enableModuleTxData.to,
-            data: sessionData.enableModuleTxData.data,
-            value: sessionData.enableModuleTxData.value || '0',
-            chainId: 10200,
-          }),
-        })
-
-        const hashData = await hashResponse.json()
-        if (!hashData.success) {
-          throw new Error(hashData.error || 'Failed to get transaction hash')
-        }
-
-        console.log('Transaction hash to sign:', hashData.txHash)
-
-        // Step 2: Sign the Safe transaction hash with w3pk
-        // Use STANDARD mode with rawHash signing method
-        console.log('Signing transaction with STANDARD/OWNER + rawHash...')
-
-        // Sign the raw Safe transaction hash using signMessage with rawHash method
-        const signature = await signMessage(hashData.txHash, {
-          mode: 'STANDARD',
-          tag: 'OWNER',
-          signingMethod: 'rawHash',
-        })
-
-        if (!signature) {
-          throw new Error('Failed to sign transaction - signature is null')
-        }
-
-        console.log('Transaction hash signed with w3pk (STANDARD/OWNER + rawHash)')
-
-        // Step 3: Send the signed hash to the server for execution
-        const executeResponse = await fetch('/api/safe/execute-tx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            safeAddress: newSafeAddress,
-            to: sessionData.enableModuleTxData.to,
-            data: sessionData.enableModuleTxData.data,
-            value: sessionData.enableModuleTxData.value || '0',
-            ownerAddress: ownerWallet.address,
-            signature,
-            chainId: 10200,
-          }),
-        })
-
-        const executeResult = await executeResponse.json()
-
-        if (!executeResult.success) {
-          throw new Error(executeResult.error || 'Failed to enable module')
-        }
-
-        toaster.create({
-          title: 'Module Enabled!',
-          description: 'Smart Sessions module is now enabled on your Safe',
-          type: 'success',
-          duration: 1000,
-        })
-
-        await new Promise(resolve => setTimeout(resolve, 3000))
-
-        // Now try creating the session key again after enabling the module
-        const finalSessionResponse = await fetch('/api/safe/create-session-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userAddress: ownerWallet.address,
-            safeAddress: newSafeAddress,
-            chainId: 10200,
-            sessionKeyAddress: userWallet.address,
-            sessionKeyIndex: 1,
-          }),
-        })
-
-        const finalSessionData = await finalSessionResponse.json()
-
-        if (!finalSessionData.success) {
-          throw new Error(
-            finalSessionData.error || 'Failed to create session key after enabling module'
-          )
-        }
-
-        setSessionKey(finalSessionData)
-
-        // Save session key to localStorage
-        const existingData = localStorage.getItem(`safe_${user?.id}`)
-        const existing = existingData ? JSON.parse(existingData) : {}
-        localStorage.setItem(
-          `safe_${user?.id}`,
-          JSON.stringify({
-            ...existing,
-            safeAddress: newSafeAddress,
-            sessionKey: finalSessionData,
-          })
-        )
-
-        toaster.create({
-          title: 'Session Key Created!',
-          description: 'You can now send gasless transactions',
-          type: 'success',
-          duration: 5000,
-        })
-      } else if (sessionData.success) {
-        // If module didn't need enabling, session key was created directly
-        setSessionKey(sessionData)
-
-        // Save session key to localStorage
-        const existingData = localStorage.getItem(`safe_${user?.id}`)
-        const existing = existingData ? JSON.parse(existingData) : {}
-        localStorage.setItem(
-          `safe_${user?.id}`,
-          JSON.stringify({
-            ...existing,
-            safeAddress: newSafeAddress,
-            sessionKey: sessionData,
-          })
-        )
-
-        // toast({
-        //   title: 'Session Key Created!',
-        //   description: 'You can now send gasless transactions',
-        //   status: 'success',
-        //   duration: 1000,
-        // })
+      if (result.success) {
+        router.push('/')
       } else {
-        throw new Error(sessionData.error || 'Failed to create session key')
+        setCurrentSetupStep('error')
       }
-
-      // toast({
-      //   title: 'Setup Complete!',
-      //   description: 'Your Safe and session key are ready.',
-      //   status: 'success',
-      //   duration: 5000,
-      // })
-      router.push('/')
     } catch (error: any) {
       console.error('Combined setup failed:', error)
       setCurrentSetupStep('error')
