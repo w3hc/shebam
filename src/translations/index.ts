@@ -35,6 +35,17 @@ type TranslationKeys = {
     testNetwork: string
     mainNetwork: string
   }
+  onboarding: {
+    settingUp: string
+    deployingSafe: string
+    safeDeployed: string
+    enablingModule: string
+    moduleEnabled: string
+    creatingSessionKey: string
+    sessionKeyCreated: string
+    complete: string
+    error: string
+  }
 }
 
 // Define translations for each supported language
@@ -77,6 +88,17 @@ export const translations: Translations = {
         ". We're using a test network right now, but it will work exactly the same on the main network.",
       mainNetwork: 'main network',
     },
+    onboarding: {
+      settingUp: 'Setting up your account',
+      deployingSafe: 'Deploying your onchain Safe...',
+      safeDeployed: 'Onchain Safe deployed',
+      enablingModule: 'Enabling session key module...',
+      moduleEnabled: 'Session key module enabled',
+      creatingSessionKey: 'Creating session key...',
+      sessionKeyCreated: 'Session key created',
+      complete: 'Setup complete!',
+      error: 'An error occurred during setup',
+    },
   },
 
   // Mandarin Chinese
@@ -110,6 +132,17 @@ export const translations: Translations = {
       legallyRegulated: '受监管',
       testNetwork: '。我们目前使用测试网络，但在主网络上运行方式完全相同。',
       mainNetwork: '主网络',
+    },
+    onboarding: {
+      settingUp: '设置您的账户',
+      deployingSafe: '正在部署您的链上Safe...',
+      safeDeployed: '链上Safe已部署',
+      enablingModule: '正在启用会话密钥模块...',
+      moduleEnabled: '会话密钥模块已启用',
+      creatingSessionKey: '正在创建会话密钥...',
+      sessionKeyCreated: '会话密钥已创建',
+      complete: '设置完成！',
+      error: '设置过程中发生错误',
     },
   },
 
@@ -145,6 +178,17 @@ export const translations: Translations = {
       testNetwork:
         'का उपयोग कर रहे हैं। हम अभी एक टेस्ट नेटवर्क का उपयोग कर रहे हैं, लेकिन यह मुख्य नेटवर्क पर भी बिल्कुल उसी तरह काम करेगा।',
       mainNetwork: 'मुख्य नेटवर्क',
+    },
+    onboarding: {
+      settingUp: 'अपना खाता सेट अप करना',
+      deployingSafe: 'आपका ऑनचेन Safe तैनात किया जा रहा है...',
+      safeDeployed: 'ऑनचेन Safe तैनात हो गया',
+      enablingModule: 'सत्र कुंजी मॉड्यूल सक्षम किया जा रहा है...',
+      moduleEnabled: 'सत्र कुंजी मॉड्यूल सक्षम हो गया',
+      creatingSessionKey: 'सत्र कुंजी बनाई जा रही है...',
+      sessionKeyCreated: 'सत्र कुंजी बन गई',
+      complete: 'सेटअप पूर्ण हो गया!',
+      error: 'सेटअप के दौरान एक त्रुटि हुई',
     },
   },
 
@@ -182,6 +226,17 @@ export const translations: Translations = {
         '. Estamos usando una red de prueba ahora, pero funcionará exactamente igual en la red principal.',
       mainNetwork: 'red principal',
     },
+    onboarding: {
+      settingUp: 'Configurando tu cuenta',
+      deployingSafe: 'Desplegando tu Safe en cadena...',
+      safeDeployed: 'Safe en cadena desplegada',
+      enablingModule: 'Habilitando módulo de clave de sesión...',
+      moduleEnabled: 'Módulo de clave de sesión habilitado',
+      creatingSessionKey: 'Creando clave de sesión...',
+      sessionKeyCreated: 'Clave de sesión creada',
+      complete: '¡Configuración completada!',
+      error: 'Ocurrió un error durante la configuración',
+    },
   },
 
   // French
@@ -218,6 +273,17 @@ export const translations: Translations = {
         '. Nous utilisons un réseau de test pour le moment, mais ça fonctionnera exactement de la même manière sur le réseau principal.',
       mainNetwork: 'réseau principal',
     },
+    onboarding: {
+      settingUp: 'Configuration de votre compte',
+      deployingSafe: 'Déploiement de votre Safe en chaîne...',
+      safeDeployed: 'Safe en chaîne déployé',
+      enablingModule: 'Activation du module de clé de session...',
+      moduleEnabled: 'Module de clé de session activé',
+      creatingSessionKey: 'Création de la clé de session...',
+      sessionKeyCreated: 'Clé de session créée',
+      complete: 'Configuration terminée !',
+      error: 'Une erreur est survenue lors de la configuration',
+    },
   },
 
   // Arabic
@@ -253,6 +319,17 @@ export const translations: Translations = {
         '. نحن نستخدم شبكة تجريبية الآن، لكنها ستعمل بنفس الطريقة تماماً على الشبكة الرئيسية.',
       mainNetwork: 'الشبكة الرئيسية',
     },
+    onboarding: {
+      settingUp: 'إعداد حسابك',
+      deployingSafe: 'نشر Safe الخاص بك على السلسلة...',
+      safeDeployed: 'تم نشر Safe على السلسلة',
+      enablingModule: 'تمكين وحدة مفتاح الجلسة...',
+      moduleEnabled: 'تم تمكين وحدة مفتاح الجلسة',
+      creatingSessionKey: 'إنشاء مفتاح الجلسة...',
+      sessionKeyCreated: 'تم إنشاء مفتاح الجلسة',
+      complete: 'اكتمل الإعداد!',
+      error: 'حدث خطأ أثناء الإعداد',
+    },
   },
 
   // Bengali
@@ -287,6 +364,17 @@ export const translations: Translations = {
       testNetwork:
         'ব্যবহার করছি। আমরা এখন একটি টেস্ট নেটওয়ার্ক ব্যবহার করছি, তবে এটি প্রধান নেটওয়ার্কে ঠিক একইভাবে কাজ করবে।',
       mainNetwork: 'প্রধান নেটওয়ার্ক',
+    },
+    onboarding: {
+      settingUp: 'আপনার অ্যাকাউন্ট সেট আপ করা হচ্ছে',
+      deployingSafe: 'আপনার অনচেইন Safe ডিপ্লয় করা হচ্ছে...',
+      safeDeployed: 'অনচেইন Safe ডিপ্লয় হয়েছে',
+      enablingModule: 'সেশন কী মডিউল সক্ষম করা হচ্ছে...',
+      moduleEnabled: 'সেশন কী মডিউল সক্ষম হয়েছে',
+      creatingSessionKey: 'সেশন কী তৈরি করা হচ্ছে...',
+      sessionKeyCreated: 'সেশন কী তৈরি হয়েছে',
+      complete: 'সেটআপ সম্পন্ন হয়েছে!',
+      error: 'সেটআপের সময় একটি ত্রুটি ঘটেছে',
     },
   },
 
@@ -324,6 +412,17 @@ export const translations: Translations = {
         '. Мы сейчас используем тестовую сеть, но в основной сети все будет работать точно так же.',
       mainNetwork: 'основная сеть',
     },
+    onboarding: {
+      settingUp: 'Настройка вашего аккаунта',
+      deployingSafe: 'Развертывание вашего Safe на блокчейне...',
+      safeDeployed: 'Safe на блокчейне развернут',
+      enablingModule: 'Включение модуля ключа сеанса...',
+      moduleEnabled: 'Модуль ключа сеанса включен',
+      creatingSessionKey: 'Создание ключа сеанса...',
+      sessionKeyCreated: 'Ключ сеанса создан',
+      complete: 'Настройка завершена!',
+      error: 'Произошла ошибка при настройке',
+    },
   },
 
   // Portuguese
@@ -360,6 +459,17 @@ export const translations: Translations = {
         '. Estamos usando uma rede de teste agora, mas funcionará exatamente da mesma forma na rede principal.',
       mainNetwork: 'rede principal',
     },
+    onboarding: {
+      settingUp: 'Configurando sua conta',
+      deployingSafe: 'Implantando sua Safe na blockchain...',
+      safeDeployed: 'Safe na blockchain implantada',
+      enablingModule: 'Habilitando módulo de chave de sessão...',
+      moduleEnabled: 'Módulo de chave de sessão habilitado',
+      creatingSessionKey: 'Criando chave de sessão...',
+      sessionKeyCreated: 'Chave de sessão criada',
+      complete: 'Configuração concluída!',
+      error: 'Ocorreu um erro durante a configuração',
+    },
   },
 
   // Urdu
@@ -395,6 +505,17 @@ export const translations: Translations = {
       testNetwork:
         'ہے۔ ہم ابھی ٹیسٹ نیٹ ورک استعمال کر رہے ہیں، لیکن یہ مرکزی نیٹ ورک پر بالکل اسی طرح کام کرے گا۔',
       mainNetwork: 'مرکزی نیٹ ورک',
+    },
+    onboarding: {
+      settingUp: 'اپنا اکاؤنٹ سیٹ اپ کیا جا رہا ہے',
+      deployingSafe: 'آپ کا آن چین Safe تعینات کیا جا رہا ہے...',
+      safeDeployed: 'آن چین Safe تعینات ہو گیا',
+      enablingModule: 'سیشن کلید ماڈیول فعال کیا جا رہا ہے...',
+      moduleEnabled: 'سیشن کلید ماڈیول فعال ہو گیا',
+      creatingSessionKey: 'سیشن کلید بنائی جا رہی ہے...',
+      sessionKeyCreated: 'سیشن کلید بن گئی',
+      complete: 'سیٹ اپ مکمل ہو گیا!',
+      error: 'سیٹ اپ کے دوران ایک خرابی پیش آگئی',
     },
   },
 }

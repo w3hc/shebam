@@ -30,6 +30,8 @@ import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
 import { FaSatellite, FaQrcode } from 'react-icons/fa'
 import { brandColors } from '@/theme'
 import { useTranslation } from '@/hooks/useTranslation'
+import { OnboardingProgress, OnboardingStep } from '@/components/OnboardingProgress'
+import { setupSafeWithSessionKey } from '@/lib/safeActions'
 
 interface SessionKey {
   sessionKeyAddress: string
@@ -64,6 +66,11 @@ export default function PaymentPage() {
   const [recipient, setRecipient] = useState('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')
   const [amount, setAmount] = useState('1')
   const [paymentRequestDetected, setPaymentRequestDetected] = useState(false)
+
+  // Onboarding state
+  const [isOnboarding, setIsOnboarding] = useState(false)
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('deploying-safe')
+  const [onboardingError, setOnboardingError] = useState<string | undefined>()
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
   const onRequestModalOpen = () => setIsRequestModalOpen(true)
@@ -201,6 +208,60 @@ export default function PaymentPage() {
     ? Date.now() > sessionKey.permissions.validUntil * 1000
     : false
 
+  // Function to start automatic onboarding
+  const startOnboarding = async () => {
+    if (!user || !deriveWallet || !signMessage) return
+
+    try {
+      setOnboardingStep('deploying-safe')
+      setOnboardingError(undefined)
+
+      const result = await setupSafeWithSessionKey(
+        {
+          userId: user.id,
+          chainId: 10200,
+          deriveWallet,
+          signMessage,
+        },
+        {
+          onDeploying: () => {
+            setOnboardingStep('deploying-safe')
+          },
+          onDeployed: (deployResult) => {
+            setOnboardingStep('safe-deployed')
+            setSafeAddress(deployResult.safeAddress)
+          },
+          onEnablingModule: () => {
+            setOnboardingStep('enabling-module')
+          },
+          onModuleEnabled: () => {
+            setOnboardingStep('module-enabled')
+          },
+          onCreatingSessionKey: () => {
+            setOnboardingStep('creating-session-key')
+          },
+          onSessionKeyCreated: (key) => {
+            setOnboardingStep('session-key-created')
+            setSessionKey(key)
+          },
+          onError: (error) => {
+            setOnboardingError(error)
+          },
+        }
+      )
+
+      if (result.success) {
+        setOnboardingStep('complete')
+        // Wait a moment to show the complete state
+        setTimeout(() => {
+          setIsOnboarding(false)
+        }, 2000)
+      }
+    } catch (error: any) {
+      setOnboardingError(error.message || 'An error occurred during setup')
+    }
+  }
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -210,7 +271,7 @@ export default function PaymentPage() {
     }
   }, [])
 
-  // Load saved Safe data from localStorage
+  // Load saved Safe data from localStorage and trigger onboarding if needed
   useEffect(() => {
     const loadSafeData = async () => {
       if (isAuthenticated && user) {
@@ -221,6 +282,10 @@ export default function PaymentPage() {
           if (data.sessionKey) {
             setSessionKey(data.sessionKey)
           }
+        } else {
+          // No Safe found - trigger automatic onboarding
+          setIsOnboarding(true)
+          await startOnboarding()
         }
 
         // Derive the owner wallet address (STANDARD + OWNER)
@@ -235,7 +300,8 @@ export default function PaymentPage() {
     }
 
     loadSafeData()
-  }, [isAuthenticated, user, deriveWallet])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user])
 
   useEffect(() => {
     return () => {
@@ -848,7 +914,13 @@ export default function PaymentPage() {
     )
   }
 
+  // Show onboarding progress if setting up Safe for first time
+  if (isOnboarding) {
+    return <OnboardingProgress currentStep={onboardingStep} error={onboardingError} />
+  }
+
   if (!safeAddress) {
+    // This should rarely be shown now since onboarding is automatic
     return (
       <Container maxW="container.md" py={20}>
         <Box textAlign="center">
