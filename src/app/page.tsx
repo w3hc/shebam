@@ -44,7 +44,7 @@ interface SessionKey {
 }
 
 export default function PaymentPage() {
-  const { isAuthenticated, user, deriveWallet, login } = useW3PK()
+  const { isAuthenticated, user, deriveWallet, login, signMessage } = useW3PK()
   const t = useTranslation()
 
   // State
@@ -212,26 +212,30 @@ export default function PaymentPage() {
 
   // Load saved Safe data from localStorage
   useEffect(() => {
-    if (isAuthenticated && user && user.ethereumAddress) {
-      const saved = localStorage.getItem(`safe_${user.id}`)
-      if (saved) {
-        const data = JSON.parse(saved)
-        setSafeAddress(data.safeAddress)
-        if (data.sessionKey) {
-          setSessionKey(data.sessionKey)
+    const loadSafeData = async () => {
+      if (isAuthenticated && user) {
+        const saved = localStorage.getItem(`safe_${user.id}`)
+        if (saved) {
+          const data = JSON.parse(saved)
+          setSafeAddress(data.safeAddress)
+          if (data.sessionKey) {
+            setSessionKey(data.sessionKey)
+          }
+        }
+
+        // Derive the owner wallet address (STANDARD + OWNER)
+        const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
+        setUserAddress(ownerWallet.address)
+
+        const safeData = SafeStorage.getSafeData(ownerWallet.address, 10200)
+        if (safeData?.deploymentBlockNumber) {
+          setDeploymentBlock(safeData.deploymentBlockNumber)
         }
       }
-
-      // Using user.ethereumAddress directly
-      const userAddr = user.ethereumAddress
-      setUserAddress(userAddr)
-
-      const safeData = SafeStorage.getSafeData(userAddr, 10200)
-      if (safeData?.deploymentBlockNumber) {
-        setDeploymentBlock(safeData.deploymentBlockNumber)
-      }
     }
-  }, [isAuthenticated, user])
+
+    loadSafeData()
+  }, [isAuthenticated, user, deriveWallet])
 
   useEffect(() => {
     return () => {
@@ -580,23 +584,49 @@ export default function PaymentPage() {
         throw new Error('User address not available')
       }
 
-      // Derive the session key wallet to sign the transaction (using YOLO mode)
-      const sessionKeyWallet = await deriveWallet('YOLO', 'BONUS')
+      // Sign transaction with session key using STANDARD mode
+      // STANDARD mode provides convenience without exposing private keys
+      const message = JSON.stringify(txData)
+      const sessionKeySignature = await signMessage(message, {
+        mode: 'STANDARD',
+        tag: 'USER',
+        signingMethod: 'EIP191', // Use EIP-191 for session key authorization
+      })
 
-      if (!sessionKeyWallet.privateKey) {
-        throw new Error('Session key private key not available')
+      if (!sessionKeySignature) {
+        throw new Error('Failed to sign transaction with session key')
       }
 
-      // Sign with the session key's private key
-      const message = JSON.stringify(txData)
-      const sessionKeySigner = new ethers.Wallet(sessionKeyWallet.privateKey)
-      const signature = await sessionKeySigner.signMessage(message)
+      // Get owner wallet address
+      const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
 
-      // Get derived wallet for signing (using YOLO mode with SHEBAM tag)
-      const wallet0 = await deriveWallet('YOLO', 'SHEBAM')
+      // Get the Safe transaction hash to sign with owner
+      const hashResponse = await fetch('/api/safe/get-tx-hash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          safeAddress,
+          to: EURO_TOKEN_ADDRESS,
+          data: transferData,
+          value: '0',
+          chainId: 10200,
+        }),
+      })
 
-      if (!wallet0.privateKey) {
-        throw new Error('Owner wallet private key not available')
+      const hashData = await hashResponse.json()
+      if (!hashData.success) {
+        throw new Error(hashData.error || 'Failed to get transaction hash')
+      }
+
+      // Sign the Safe transaction hash with OWNER wallet
+      const ownerSignature = await signMessage(hashData.txHash, {
+        mode: 'STANDARD',
+        tag: 'OWNER',
+        signingMethod: 'rawHash',
+      })
+
+      if (!ownerSignature) {
+        throw new Error('Failed to sign transaction hash with owner wallet')
       }
 
       // Try WebSocket mode first, fall back to sync mode
@@ -604,15 +634,15 @@ export default function PaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userAddress: wallet0.address,
+          ownerAddress: ownerWallet.address,
           safeAddress,
           chainId: 10200,
           to: recipient,
           amount: transferAmount, // Send the EUR token amount
           sessionKeyAddress: sessionKey.sessionKeyAddress,
           sessionKeyValidUntil: sessionKey.permissions.validUntil,
-          userPrivateKey: wallet0.privateKey,
-          signature,
+          sessionKeySignature, // Session key signature for validation
+          ownerSignature, // Owner signature for Safe transaction
           useWebSocket: true, // Request WebSocket mode
         }),
       })
@@ -635,9 +665,6 @@ export default function PaymentPage() {
               description: `Verified in ${update.duration?.toFixed(2)}s`,
               type: 'success',
               duration: 4000,
-              // containerStyle: {
-              //   bg: 'green.500',
-              // },
             })
 
             if (window.history && window.history.replaceState) {
@@ -674,16 +701,6 @@ export default function PaymentPage() {
             // Start showing refetch loader
             setIsRefetchingAfterConfirmation(true)
           } else if (update.status === 'confirmed') {
-            // toast({
-            //   title: '✅ Settled!',
-            //   description: `Settled onchain in ${update.duration?.toFixed(2)}s.\nTx hash: ${update.txHash?.slice(0, 10) || 'N/A'}...`,
-            //   status: 'info',
-            //   duration: 5000,
-            //   // containerStyle: {
-            //   //   bg: 'green.500',
-            //   // },
-            // })
-
             // Update the pending transaction to 'confirmed' status
             setPendingTransactions(prev =>
               prev.map(tx =>
@@ -746,18 +763,6 @@ export default function PaymentPage() {
         }
 
         setIsSending(false)
-
-        if (data.durations?.confirmed && data.txHash) {
-          // toast({
-          //   title: '✅ Settled!',
-          //   description: `Settled onchain in ${data.durations.confirmed.toFixed(2)}s. \nTx hash: ${data.txHash?.slice(0, 10) || 'N/A'}...`,
-          //   status: 'info',
-          //   duration: 5000,
-          //   // containerStyle: {
-          //   //   bg: 'green.500',
-          //   // },
-          // })
-        }
 
         // Clear form and reload balance and transactions
         setRecipient('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')

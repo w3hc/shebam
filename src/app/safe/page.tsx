@@ -81,7 +81,7 @@ export default function SafePage() {
       if (safeAddress && isAuthenticated && !safeOwner) {
         // If we have a Safe but no owner info, try to derive and verify
         try {
-          const wallet0 = await deriveWallet('YOLO', 'SHEBAM')
+          const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
 
           // Check on-chain if this wallet is an owner
           const response = await fetch('/api/safe/get-owners', {
@@ -97,18 +97,18 @@ export default function SafePage() {
           if (
             data.success &&
             data.owners?.some(
-              (owner: string) => owner.toLowerCase() === wallet0.address.toLowerCase()
+              (owner: string) => owner.toLowerCase() === ownerWallet.address.toLowerCase()
             )
           ) {
             // Update localStorage with owner info
-            setSafeOwner(wallet0.address)
+            setSafeOwner(ownerWallet.address)
             const existingData = localStorage.getItem(`safe_${user?.id}`)
             const existing = existingData ? JSON.parse(existingData) : {}
             localStorage.setItem(
               `safe_${user?.id}`,
               JSON.stringify({
                 ...existing,
-                safeOwner: wallet0.address,
+                safeOwner: ownerWallet.address,
               })
             )
           } else {
@@ -175,15 +175,16 @@ export default function SafePage() {
     try {
       // Step 1: Deploy Safe
       console.log('Step 1: Deploying Safe...')
-      const wallet0 = await deriveWallet('YOLO', 'SHEBAM')
-      const wallet1 = await deriveWallet('YOLO', 'BONUS')
-      setDerivedAddresses([wallet0.address, wallet1.address])
+      // Use STANDARD mode for both owner and user wallets
+      const ownerWallet = await deriveWallet('STANDARD', 'OWNER')
+      const userWallet = await deriveWallet('STANDARD', 'USER')
+      setDerivedAddresses([ownerWallet.address, userWallet.address])
 
       const deployResponse = await fetch('/api/safe/deploy-safe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userAddress: wallet0.address,
+          userAddress: ownerWallet.address,
           chainId: 10200,
         }),
       })
@@ -196,14 +197,14 @@ export default function SafePage() {
 
       const newSafeAddress = deployData.safeAddress
       setSafeAddress(newSafeAddress)
-      setSafeOwner(wallet0.address)
+      setSafeOwner(ownerWallet.address)
 
       // Save to localStorage
       localStorage.setItem(
         `safe_${user?.id}`,
         JSON.stringify({
           safeAddress: newSafeAddress,
-          safeOwner: wallet0.address,
+          safeOwner: ownerWallet.address,
         })
       )
 
@@ -225,10 +226,10 @@ export default function SafePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userAddress: wallet0.address,
+          userAddress: ownerWallet.address,
           safeAddress: newSafeAddress,
           chainId: 10200,
-          sessionKeyAddress: wallet1.address, // Use derived address[1] as session key
+          sessionKeyAddress: userWallet.address, // Use USER wallet as session key
           sessionKeyIndex: 1,
         }),
       })
@@ -265,21 +266,21 @@ export default function SafePage() {
         console.log('Transaction hash to sign:', hashData.txHash)
 
         // Step 2: Sign the Safe transaction hash with w3pk
-        // We need to sign the raw hash directly, not with EIP-191 prefix
-        // So we use YOLO mode to get the private key and sign directly
-        console.log('Deriving wallet in YOLO mode to sign transaction...')
-        const yoloWallet = await deriveWallet('YOLO', 'SHEBAM')
+        // Use STANDARD mode with rawHash signing method
+        console.log('Signing transaction with STANDARD/OWNER + rawHash...')
 
-        if (!yoloWallet.privateKey) {
-          throw new Error('Failed to get private key in YOLO mode')
+        // Sign the raw Safe transaction hash using signMessage with rawHash method
+        const signature = await signMessage(hashData.txHash, {
+          mode: 'STANDARD',
+          tag: 'OWNER',
+          signingMethod: 'rawHash',
+        })
+
+        if (!signature) {
+          throw new Error('Failed to sign transaction - signature is null')
         }
 
-        // Sign the raw Safe transaction hash directly with ethers
-        const { ethers } = await import('ethers')
-        const signingKey = new ethers.SigningKey(yoloWallet.privateKey)
-        const signature = signingKey.sign(hashData.txHash).serialized
-
-        console.log('Transaction hash signed with w3pk (YOLO mode)')
+        console.log('Transaction hash signed with w3pk (STANDARD/OWNER + rawHash)')
 
         // Step 3: Send the signed hash to the server for execution
         const executeResponse = await fetch('/api/safe/execute-tx', {
@@ -290,7 +291,7 @@ export default function SafePage() {
             to: sessionData.enableModuleTxData.to,
             data: sessionData.enableModuleTxData.data,
             value: sessionData.enableModuleTxData.value || '0',
-            ownerAddress: wallet0.address,
+            ownerAddress: ownerWallet.address,
             signature,
             chainId: 10200,
           }),
@@ -308,7 +309,6 @@ export default function SafePage() {
           type: 'success',
           duration: 1000,
         })
-        setModuleEnableTxData(null)
 
         await new Promise(resolve => setTimeout(resolve, 3000))
 
@@ -317,10 +317,10 @@ export default function SafePage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userAddress: wallet0.address,
+            userAddress: ownerWallet.address,
             safeAddress: newSafeAddress,
             chainId: 10200,
-            sessionKeyAddress: wallet1.address,
+            sessionKeyAddress: userWallet.address,
             sessionKeyIndex: 1,
           }),
         })
