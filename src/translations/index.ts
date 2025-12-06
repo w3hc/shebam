@@ -43,8 +43,8 @@ export const translations: Translations = {
     home: {
       title: 'Welcome!',
       subtitle: "It's a pleasure to have you here!",
-      greeting: 'Hello Anon!',
-      greetingSubtitle: 'Sit back, relax, and build something cool!',
+      greeting: 'Welcome!',
+      greetingSubtitle: 'Relax and enjoy life!',
     },
     navigation: {
       settings: 'Settings',
@@ -66,8 +66,8 @@ export const translations: Translations = {
     home: {
       title: '欢迎！',
       subtitle: '很高兴您来到这里！',
-      greeting: '你好，匿名用户！',
-      greetingSubtitle: '坐下来，放松，创造一些很酷的东西！',
+      greeting: '欢迎！',
+      greetingSubtitle: '放松并享受生活！',
     },
     navigation: {
       settings: '设置',
@@ -89,8 +89,8 @@ export const translations: Translations = {
     home: {
       title: 'स्वागत है!',
       subtitle: 'आपका यहाँ स्वागत है!',
-      greeting: 'नमस्ते मित्र!',
-      greetingSubtitle: 'आराम से बैठें और कुछ शानदार बनाएं!',
+      greeting: 'स्वागत है!',
+      greetingSubtitle: 'आराम करें और जीवन का आनंद लें!',
     },
     navigation: {
       settings: 'सेटिंग्स',
@@ -112,8 +112,8 @@ export const translations: Translations = {
     home: {
       title: '¡Bienvenido!',
       subtitle: '¡Es un placer tenerte aquí!',
-      greeting: '¡Hola Anon!',
-      greetingSubtitle: '¡Siéntate, relájate y crea algo genial!',
+      greeting: '¡Bienvenido!',
+      greetingSubtitle: '¡Relájate y disfruta de la vida!',
     },
     navigation: {
       settings: 'Configuración',
@@ -135,7 +135,7 @@ export const translations: Translations = {
     home: {
       title: 'Bienvenue !',
       subtitle: "C'est un plaisir de vous avoir ici !",
-      greeting: 'Bonjour !',
+      greeting: 'Bienvenue !',
       greetingSubtitle: 'Détendez-vous et profitez de la vie !',
     },
     navigation: {
@@ -158,8 +158,8 @@ export const translations: Translations = {
     home: {
       title: 'مرحباً!',
       subtitle: 'يسعدنا وجودك هنا!',
-      greeting: 'مرحبا أيها المجهول!',
-      greetingSubtitle: 'استرخ وابنِ شيئاً رائعاً!',
+      greeting: 'مرحباً!',
+      greetingSubtitle: 'استرخ واستمتع بالحياة!',
     },
     navigation: {
       settings: 'الإعدادات',
@@ -181,8 +181,8 @@ export const translations: Translations = {
     home: {
       title: 'স্বাগতম!',
       subtitle: 'আপনাকে এখানে পেয়ে আনন্দিত!',
-      greeting: 'হ্যালো বন্ধু!',
-      greetingSubtitle: 'বসুন, আরাম করুন এবং কিছু দুর্দান্ত তৈরি করুন!',
+      greeting: 'স্বাগতম!',
+      greetingSubtitle: 'আরাম করুন এবং জীবন উপভোগ করুন!',
     },
     navigation: {
       settings: 'সেটিংস',
@@ -204,8 +204,8 @@ export const translations: Translations = {
     home: {
       title: 'Добро пожаловать!',
       subtitle: 'Рады видеть вас здесь!',
-      greeting: 'Привет, незнакомец!',
-      greetingSubtitle: 'Расслабьтесь и создайте что-нибудь крутое!',
+      greeting: 'Добро пожаловать!',
+      greetingSubtitle: 'Расслабьтесь и наслаждайтесь жизнью!',
     },
     navigation: {
       settings: 'Настройки',
@@ -227,8 +227,8 @@ export const translations: Translations = {
     home: {
       title: 'Bem-vindo!',
       subtitle: 'É um prazer tê-lo aqui!',
-      greeting: 'Olá Anon!',
-      greetingSubtitle: 'Sente-se, relaxe e construa algo legal!',
+      greeting: 'Bem-vindo!',
+      greetingSubtitle: 'Relaxe e aproveite a vida!',
     },
     navigation: {
       settings: 'Configurações',
@@ -250,8 +250,8 @@ export const translations: Translations = {
     home: {
       title: 'خوش آمدید!',
       subtitle: 'آپ کا یہاں ہونا خوشی کی بات ہے!',
-      greeting: 'ہیلو دوست!',
-      greetingSubtitle: 'آرام سے بیٹھیں اور کچھ شاندار بنائیں!',
+      greeting: 'خوش آمدید!',
+      greetingSubtitle: 'آرام کریں اور زندگی سے لطف اندوز ہوں!',
     },
     navigation: {
       settings: 'ترتیبات',
