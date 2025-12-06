@@ -969,8 +969,9 @@ export default function PaymentPage() {
                 value={amount}
                 onValueChange={e => setAmount(e.value)}
                 min={0}
-                step={0.001}
+                step={1}
                 disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
+                width="full"
               >
                 <NumberInput.Field
                   type="text"
@@ -990,7 +991,7 @@ export default function PaymentPage() {
               )}
             </Field>
 
-            <HStack gap={4}>
+            <HStack gap={4} justify="space-between">
               <Button
                 bg={brandColors.accent}
                 color="white"
@@ -1005,11 +1006,9 @@ export default function PaymentPage() {
               </Button>
               {!paymentRequestDetected && (
                 <Button
-                  bg={brandColors.primary}
-                  color="white"
-                  _hover={{ bg: brandColors.secondary }}
                   variant="outline"
-                  size="sm"
+                  size="lg"
+                  borderColor={brandColors.primary}
                   onClick={onRequestModalOpen}
                   disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
                 >
@@ -1119,11 +1118,11 @@ export default function PaymentPage() {
                         value={requestAmount}
                         onValueChange={e => setRequestAmount(e.value)}
                         min={0}
-                        step={0.001}
+                        step={1}
                       >
                         <NumberInput.Field
                           type="text"
-                          placeholder="0.00"
+                          placeholder="0"
                           fontFamily="mono"
                           onWheel={(e: any) => e.currentTarget.blur()}
                         />
@@ -1159,72 +1158,76 @@ export default function PaymentPage() {
                 )}
               </Dialog.Body>
 
-              <Dialog.Footer pt={{ base: 2, md: 4 }} gap={2} flexWrap="wrap">
+              <Dialog.Footer pt={{ base: 2, md: 4 }}>
                 {!isQRGenerated ? (
-                  <>
-                    <Button
-                      bg="blue.600"
-                      color="white"
-                      _hover={{ bg: 'blue.500' }}
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleRequestPayment}
-                      disabled={!requestAmount || parseFloat(requestAmount) <= 0}
-                    >
-                      <FaQrcode />
-                      Generate QR
-                    </Button>
-
-                    {isWebNFCSupported ? (
+                  <VStack align="stretch" width="full" gap={2}>
+                    <HStack gap={2} justify="flex-start">
                       <Button
-                        bg="green.600"
+                        bg={brandColors.accent}
                         color="white"
-                        _hover={{ bg: 'green.500' }}
+                        _hover={{ bg: brandColors.accent, opacity: 0.8 }}
                         size={{ base: 'sm', md: 'md' }}
-                        onClick={() => {
-                          if (!safeAddress || !requestAmount) return
-                          try {
-                            const amountInWei = ethers.parseEther(requestAmount).toString()
-                            const paymentUrl = generatePaymentRequestUrl(
-                              safeAddress,
-                              amountInWei,
-                              EURO_TOKEN_ADDRESS
-                            )
-                            writeNFC(paymentUrl)
-                          } catch (err) {
-                            toaster.create({
-                              title: 'Invalid Amount',
-                              description: 'Please enter a valid EUR amount.',
-                              type: 'error',
-                              duration: 3000,
-                            })
-                          }
-                        }}
+                        onClick={handleRequestPayment}
                         disabled={!requestAmount || parseFloat(requestAmount) <= 0}
                       >
-                        <FaSatellite />
-                        Write to NFC
+                        <FaQrcode />
+                        Generate QR
                       </Button>
-                    ) : (
-                      <Tooltip
-                        content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
-                        showArrow={true}
-                      >
-                        <span>
-                          <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
-                            NFC Not Available
-                          </Button>
-                        </span>
-                      </Tooltip>
-                    )}
 
-                    <Button
-                      variant="ghost"
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleRequestModalClose}
-                    >
-                      Close
-                    </Button>
-                  </>
+                      {isWebNFCSupported ? (
+                        <Button
+                          bg="green.600"
+                          color="white"
+                          _hover={{ bg: 'green.500' }}
+                          size={{ base: 'sm', md: 'md' }}
+                          onClick={() => {
+                            if (!safeAddress || !requestAmount) return
+                            try {
+                              const amountInWei = ethers.parseEther(requestAmount).toString()
+                              const paymentUrl = generatePaymentRequestUrl(
+                                safeAddress,
+                                amountInWei,
+                                EURO_TOKEN_ADDRESS
+                              )
+                              writeNFC(paymentUrl)
+                            } catch (err) {
+                              toaster.create({
+                                title: 'Invalid Amount',
+                                description: 'Please enter a valid EUR amount.',
+                                type: 'error',
+                                duration: 3000,
+                              })
+                            }
+                          }}
+                          disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                        >
+                          <FaSatellite />
+                          Write to NFC
+                        </Button>
+                      ) : (
+                        <Tooltip
+                          content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
+                          showArrow={true}
+                        >
+                          <span>
+                            <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
+                              NFC Not Available
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </HStack>
+
+                    <HStack justify="flex-end">
+                      <Button
+                        variant="ghost"
+                        size={{ base: 'sm', md: 'md' }}
+                        onClick={handleRequestModalClose}
+                      >
+                        Close
+                      </Button>
+                    </HStack>
+                  </VStack>
                 ) : (
                   <Button
                     bg={brandColors.accent}
