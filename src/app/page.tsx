@@ -873,11 +873,22 @@ export default function PaymentPage() {
     <Container maxW="container.md" py={20}>
       <VStack gap={8} align="stretch">
         {/* Header */}
-        <Box textAlign="center">
-          <Heading as="h1" size="xl" mb={2}>
-            Payment
-          </Heading>
-          <Text color="gray.400">Send and receive EUR</Text>
+        <Box>
+          <Text>
+            {t.header.intro}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.faster}
+            </Text>{' '}
+            {t.header.and}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.cheaper}
+            </Text>{' '}
+            {t.header.thanAnyExisting}{' '}
+            <Text as="span" color="brand.accent">
+              {t.header.legallyRegulated}
+            </Text>
+            {t.header.testNetwork}
+          </Text>
         </Box>
 
         {/* Send Block */}
