@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Container, Heading, Text, VStack } from '@chakra-ui/react'
+import { brandColors } from '@/theme'
 
 export type OnboardingStep =
   | 'deploying-safe'
@@ -29,8 +30,8 @@ const stepInfo: Record<OnboardingStep, { label: string; progress: number }> = {
 export function OnboardingProgress({ currentStep, error }: OnboardingProgressProps) {
   const { label, progress } = stepInfo[currentStep]
 
-  // Calculate completed steps based on current step
-  const completedSteps: string[] = []
+  // Calculate completed status messages to accumulate (only show completed, not in-progress)
+  const completedMessages: string[] = []
   const stepOrder: OnboardingStep[] = [
     'deploying-safe',
     'safe-deployed',
@@ -41,17 +42,22 @@ export function OnboardingProgress({ currentStep, error }: OnboardingProgressPro
     'complete',
   ]
 
+  // Only show completed steps
   const completedStepKeys: OnboardingStep[] = [
     'safe-deployed',
     'module-enabled',
     'session-key-created',
+    'complete',
   ]
 
   const currentIndex = stepOrder.indexOf(currentStep)
+
+  // Build accumulated completed messages
   for (const stepKey of completedStepKeys) {
     const stepIndex = stepOrder.indexOf(stepKey)
-    if (stepIndex <= currentIndex) {
-      completedSteps.push(stepInfo[stepKey].label)
+    // Only add if this step has been completed (not the current step unless it's complete)
+    if (stepIndex < currentIndex || currentStep === 'complete') {
+      completedMessages.push(stepInfo[stepKey].label)
     }
   }
 
@@ -70,35 +76,29 @@ export function OnboardingProgress({ currentStep, error }: OnboardingProgressPro
           </Box>
         ) : (
           <>
-            {/* Custom Progress Bar */}
-            <Box w="100%" h="8px" bg="gray.700" borderRadius="full" overflow="hidden" mb={6}>
+            {/* Custom Progress Bar with brand primary color */}
+            <Box w="100%" h="10px" bg="gray.700" borderRadius="full" overflow="hidden" mb={4}>
               <Box
                 h="100%"
                 w={`${progress}%`}
-                bg="green.500"
+                bg={brandColors.primary}
                 borderRadius="full"
                 transition="width 0.3s ease-in-out"
               />
             </Box>
 
-            <Text fontSize="lg" color="gray.300" mb={8} fontWeight="medium">
+            {/* Current action in white under progress bar */}
+            <Text color="white" fontSize="md" mb={8} fontWeight="normal">
               {label}
             </Text>
 
-            {completedSteps.length > 0 && (
-              <VStack align="stretch" gap={2} maxW="400px" mx="auto">
-                {completedSteps.map((step, index) => (
-                  <Box
-                    key={index}
-                    bg="green.900"
-                    border="1px solid"
-                    borderColor="green.700"
-                    borderRadius="md"
-                    p={3}
-                    textAlign="left"
-                  >
-                    <Text color="green.200" fontSize="sm">
-                      ✓ {step}
+            {/* Accumulated completed messages */}
+            {completedMessages.length > 0 && (
+              <VStack align="stretch" gap={2} maxW="500px" mx="auto">
+                {completedMessages.map((message, index) => (
+                  <Box key={index} textAlign="left" transition="all 0.3s ease-in-out">
+                    <Text color={brandColors.accent} fontSize="sm" fontWeight="medium">
+                      {message}
                     </Text>
                   </Box>
                 ))}
