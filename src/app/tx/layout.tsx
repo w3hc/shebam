@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Web3 payment app',
     description: 'Send and receive EUR with your Safe wallet',
-    url: 'https://w3pk.w3hc.org/tx',
+    url: 'https://sehbam.w3hc.org/tx',
     siteName: 'Shebam',
     images: [
       {

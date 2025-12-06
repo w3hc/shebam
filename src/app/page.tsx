@@ -469,7 +469,7 @@ export default function PaymentPage() {
   }, [safeAddress])
 
   const getTxBaseUrl = () => {
-    if (typeof window === 'undefined') return 'https://w3pk.w3hc.org/'
+    if (typeof window === 'undefined') return 'https://shebam.w3hc.org/'
 
     // Check if we're in development (localhost)
     if (
@@ -481,7 +481,7 @@ export default function PaymentPage() {
     }
 
     // Otherwise, assume production
-    return 'https://w3pk.w3hc.org/'
+    return 'https://shebam.w3hc.org/'
   }
 
   const generatePaymentRequestUrl = (
