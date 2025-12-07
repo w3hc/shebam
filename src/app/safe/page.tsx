@@ -608,10 +608,10 @@ export default function SafePage() {
         {safeAddress && currentSetupStep === 'idle' && (
           <Box mt={500} mb={50} mr={30} textAlign="right" pt={4}>
             <Button
-              size="sm"
-              bg={brandColors.accent}
+              size="xs"
+              bg={brandColors.primary}
               color="white"
-              _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+              _hover={{ bg: brandColors.primary, opacity: 0.8 }}
               onClick={mintEUR}
               loading={isMintingEUR}
             >

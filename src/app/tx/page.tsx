@@ -30,6 +30,7 @@ import { useSafeTransactionHistory } from '@/hooks/useSafeTransactionHistory'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
 import { FaSatellite, FaQrcode } from 'react-icons/fa'
 import { brandColors } from '@/theme'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface SessionKey {
   sessionKeyAddress: string
@@ -45,6 +46,7 @@ interface SessionKey {
 
 export default function PaymentPage() {
   const { isAuthenticated, user, deriveWallet } = useW3PK()
+  const t = useTranslation()
 
   // State
   const [safeAddress, setSafeAddress] = useState<string | null>(null)
@@ -140,9 +142,8 @@ export default function PaymentPage() {
   const writeNFC = async (url: string) => {
     if (!isWebNFCSupported) {
       toaster.create({
-        title: 'NFC Write Not Available',
-        description:
-          'NFC writing requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Visit /nfc to troubleshoot.',
+        title: t.tx.nfcWriteNotAvailable,
+        description: t.tx.nfcWriteNotAvailableDesc,
         type: 'warning',
         duration: 5000,
       })
@@ -165,29 +166,29 @@ export default function PaymentPage() {
       })
 
       toaster.create({
-        title: '✅ NFC Written!',
-        description: 'Hold the tag near your phone to pay.',
+        title: t.tx.nfcWritten,
+        description: t.tx.nfcWrittenDesc,
         type: 'success',
         duration: 3000,
       })
     } catch (error: any) {
       console.error('NFC write failed:', error)
-      let message = error.message || 'Failed to write to NFC tag.'
+      let message = error.message || t.tx.failedToGenerateQR
 
       if (error.name === 'NotAllowedError') {
-        message = 'NFC permission denied. Please allow NFC access in your browser settings.'
+        message = t.tx.nfcPermissionDenied
       } else if (error.name === 'NotSupportedError') {
-        message = 'NFC is not supported on this device.'
+        message = t.tx.nfcNotSupported
       } else if (error.name === 'NotReadableError') {
-        message = 'Cannot read NFC tag. Try again.'
+        message = t.tx.cannotReadNFC
       } else if (message.includes('aborted') || error.name === 'AbortError') {
-        message = 'Operation canceled.'
+        message = t.tx.operationCanceled
       } else if (message.includes('no tag')) {
-        message = 'No NFC tag detected. Try again.'
+        message = t.tx.noNFCTagDetected
       }
 
       toaster.create({
-        title: 'NFC Write Failed',
+        title: t.tx.nfcWriteFailed,
         description: message,
         type: 'error',
         duration: 5000,
@@ -374,8 +375,10 @@ export default function PaymentPage() {
           // Skip adding to pending if it's a self-send (already added by outgoing WebSocket)
           if (!isSelfSend) {
             toaster.create({
-              title: '✅ Paid!',
-              description: `You received ${amountEth} EUR from ${update.from?.slice(0, 10)}...`,
+              title: t.tx.paid,
+              description: t.tx.paidDesc
+                .replace('{amount}', amountEth)
+                .replace('{address}', update.from?.slice(0, 10) || ''),
               type: 'success',
               duration: 5000,
               // containerStyle: {
@@ -499,9 +502,8 @@ export default function PaymentPage() {
   const sendTransaction = async () => {
     if (isCooldown) {
       toaster.create({
-        title: 'Please wait',
-        description:
-          'A transaction is already being processed or recently sent. Please wait before sending another.',
+        title: t.tx.pleaseWait,
+        description: t.tx.transactionInProgress,
         type: 'info',
         duration: 3000,
       })
@@ -510,8 +512,8 @@ export default function PaymentPage() {
 
     if (!safeAddress || !sessionKey || !recipient || !amount) {
       toaster.create({
-        title: 'Error',
-        description: 'Please fill in all fields and create a session key first',
+        title: t.tx.error,
+        description: t.tx.fillAllFields,
         type: 'error',
         duration: 5000,
       })
@@ -520,8 +522,8 @@ export default function PaymentPage() {
 
     if (isSessionKeyExpired) {
       toaster.create({
-        title: 'Session Key Expired',
-        description: 'Please create a new session key on the /safe page',
+        title: t.tx.sessionKeyExpired,
+        description: t.tx.sessionKeyExpiredDesc,
         type: 'error',
         duration: 5000,
       })
@@ -629,8 +631,8 @@ export default function PaymentPage() {
 
           if (update.status === 'verified') {
             toaster.create({
-              title: '✅ Sent!',
-              description: `Verified in ${update.duration?.toFixed(2)}s`,
+              title: t.tx.sent,
+              description: t.tx.verifiedIn.replace('{duration}', update.duration?.toFixed(2) || '0'),
               type: 'success',
               duration: 4000,
               // containerStyle: {
@@ -718,8 +720,8 @@ export default function PaymentPage() {
         ws.onerror = error => {
           console.error('WebSocket error:', error)
           toaster.create({
-            title: 'Connection Error',
-            description: 'Lost connection to transaction status',
+            title: t.tx.connectionError,
+            description: t.tx.lostConnection,
             type: 'warning',
             duration: 5000,
           })
@@ -736,8 +738,11 @@ export default function PaymentPage() {
         // Show completion toasts
         if (data.durations?.verified) {
           toaster.create({
-            title: '✅ Sent!',
-            description: `Verified in ${data.durations.verified.toFixed(2)}s`,
+            title: t.tx.sent,
+            description: t.tx.verifiedIn.replace(
+              '{duration}',
+              data.durations.verified.toFixed(2)
+            ),
             type: 'success',
             duration: 4000,
           })
@@ -769,7 +774,7 @@ export default function PaymentPage() {
       }
     } catch (error: any) {
       toaster.create({
-        title: 'Transaction Failed',
+        title: t.tx.transactionFailed,
         description: error.message,
         type: 'error',
         duration: 8000,
@@ -793,8 +798,8 @@ export default function PaymentPage() {
     } catch (error) {
       console.error('Error generating QR data:', error)
       toaster.create({
-        title: 'Error',
-        description: 'Failed to generate QR code data.',
+        title: t.tx.error,
+        description: t.tx.failedToGenerateQR,
         type: 'error',
         duration: 3000,
       })
@@ -804,8 +809,8 @@ export default function PaymentPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toaster.create({
-      title: 'Copied!',
-      description: 'Address copied to clipboard',
+      title: t.tx.copied,
+      description: t.tx.addressCopied,
       type: 'success',
       duration: 2000,
     })
@@ -815,7 +820,7 @@ export default function PaymentPage() {
     return (
       <Container maxW="container.md" py={20}>
         <Box textAlign="center">
-          <Heading mb={4}>Please Login</Heading>
+          <Heading mb={4}>{t.common.pleaseLogin}</Heading>
         </Box>
       </Container>
     )
@@ -825,9 +830,9 @@ export default function PaymentPage() {
     return (
       <Container maxW="container.md" py={20}>
         <Box textAlign="center">
-          <Heading mb={4}>No Safe Wallet</Heading>
+          <Heading mb={4}>{t.tx.noSafeWallet}</Heading>
           <Text color="gray.400" mb={6}>
-            Please deploy a Safe wallet first on the /safe page
+            {t.tx.deploySafeFirst}
           </Text>
           <Button
             asChild
@@ -835,7 +840,7 @@ export default function PaymentPage() {
             color="white"
             _hover={{ bg: brandColors.accent, opacity: 0.8 }}
           >
-            <a href="/safe">Go to Safe Dashboard</a>
+            <a href="/safe">{t.tx.goToSafeDashboard}</a>
           </Button>
         </Box>
       </Container>
@@ -848,25 +853,25 @@ export default function PaymentPage() {
         {/* Header */}
         <Box textAlign="center">
           <Heading as="h1" size="xl" mb={2}>
-            Payment
+            {t.tx.pageTitle}
           </Heading>
-          <Text color="gray.400">Send and receive EUR</Text>
+          <Text color="gray.400">{t.tx.pageSubtitle}</Text>
         </Box>
 
         {/* Send Block */}
         <Box bg="gray.900" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
           <HStack justify="space-between" mb={4}>
-            <Heading size="md">Send EUR</Heading>
+            <Heading size="md">{t.tx.sendEUR}</Heading>
             <HStack>
               <Text fontSize="sm" color="gray.400">
-                Balance:
+                {t.tx.balance}
               </Text>
               {isLoadingBalance ? (
                 <HStack gap={1}>
                   <Text fontFamily="mono" fontWeight="bold">
                     {parseFloat(ethers.formatEther(safeBalance)).toFixed(2)}
                   </Text>
-                  <IconButton aria-label="Refresh balance" size="xs" variant="ghost">
+                  <IconButton aria-label={t.tx.refreshBalance} size="xs" variant="ghost">
                     <FiRefreshCw />
                   </IconButton>
                 </HStack>
@@ -876,7 +881,7 @@ export default function PaymentPage() {
                     {parseFloat(ethers.formatEther(safeBalance)).toFixed(2)}
                   </Text>
                   <IconButton
-                    aria-label="Refresh balance"
+                    aria-label={t.tx.refreshBalance}
                     size="xs"
                     variant="ghost"
                     onClick={loadBalance}
@@ -893,22 +898,22 @@ export default function PaymentPage() {
               <Box>
                 <HStack justify="space-between" mb={2}>
                   <Text fontSize="sm" color="gray.400">
-                    Session Key:
+                    {t.tx.sessionKey}
                   </Text>
                   <Badge colorPalette={isSessionKeyExpired ? 'red' : 'green'}>
-                    {isSessionKeyExpired ? 'Expired' : 'Active'}
+                    {isSessionKeyExpired ? t.tx.expired : t.tx.active}
                   </Badge>
                 </HStack>
                 <Text fontSize="sm" color="gray.400">
-                  Expires: {new Date(sessionKey.expiresAt).toLocaleString()}
+                  {t.tx.expires} {new Date(sessionKey.expiresAt).toLocaleString()}
                 </Text>
                 {isSessionKeyExpired && (
                   <Alert.Root status="error" mt={3} borderRadius="md">
                     <Alert.Indicator />
                     <Box>
-                      <Alert.Title>Session Key Expired</Alert.Title>
+                      <Alert.Title>{t.tx.sessionKeyExpired}</Alert.Title>
                       <Alert.Description fontSize="sm">
-                        Go to /safe to create a new session key
+                        {t.tx.goToSafeToCreateKey}
                       </Alert.Description>
                     </Box>
                   </Alert.Root>
@@ -918,18 +923,18 @@ export default function PaymentPage() {
               <Alert.Root status="warning" borderRadius="md">
                 <Alert.Indicator />
                 <Box>
-                  <Alert.Title>No Session Key</Alert.Title>
+                  <Alert.Title>{t.tx.noSessionKey}</Alert.Title>
                   <Alert.Description fontSize="sm">
-                    Create a session key on /safe to send transactions
+                    {t.tx.createSessionKeyOnSafe}
                   </Alert.Description>
                 </Box>
               </Alert.Root>
             )}
 
             {/* Send Form */}
-            <Field label="Recipient Address">
+            <Field label={t.tx.recipientAddress}>
               <Input
-                placeholder="0x..."
+                placeholder={t.tx.recipientPlaceholder}
                 value={recipient}
                 onChange={e => setRecipient(e.target.value)}
                 fontFamily="mono"
@@ -937,7 +942,7 @@ export default function PaymentPage() {
               />
             </Field>
 
-            <Field label="Amount (EUR)">
+            <Field label={t.tx.amountEUR}>
               <NumberInput.Root
                 value={amount}
                 onValueChange={e => setAmount(e.value)}
@@ -947,7 +952,7 @@ export default function PaymentPage() {
               >
                 <NumberInput.Field
                   type="text"
-                  placeholder="1"
+                  placeholder={t.tx.amountPlaceholder}
                   fontFamily="mono"
                   onWheel={(e: any) => e.currentTarget.blur()}
                 />
@@ -958,42 +963,27 @@ export default function PaymentPage() {
               </NumberInput.Root>
               {paymentRequestDetected && (
                 <Text mt={3} fontSize="md" color="red">
-                  Incoming payment request detected. Would you like to proceed?
+                  {t.tx.incomingPaymentRequest}
                 </Text>
               )}
             </Field>
 
-            <HStack gap={4}>
-              <Button
-                bg={brandColors.accent}
-                color="white"
-                _hover={{ bg: brandColors.accent, opacity: 0.8 }}
-                size="lg"
-                onClick={sendTransaction}
-                loading={isSending}
-                disabled={!recipient || !amount || !sessionKey || isSessionKeyExpired || isCooldown}
-              >
-                <FiSend />
-                Send
-              </Button>
-              {!paymentRequestDetected && (
-                <Button
-                  bg="blue.600"
-                  color="white"
-                  _hover={{ bg: 'blue.500' }}
-                  variant="outline"
-                  size="sm"
-                  onClick={onRequestModalOpen}
-                  disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
-                >
-                  Request Payment
-                </Button>
-              )}
-            </HStack>
+            <Button
+              bg={brandColors.accent}
+              color="white"
+              _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+              size="lg"
+              onClick={sendTransaction}
+              loading={isSending}
+              disabled={!recipient || !amount || !sessionKey || isSessionKeyExpired || isCooldown}
+            >
+              <FiSend />
+              {t.tx.send}
+            </Button>
 
             {insufficientBalance && (
               <Text fontSize="2xs" color="red">
-                Insufficient balance
+                {t.tx.insufficientBalance}
               </Text>
             )}
           </VStack>
@@ -1002,11 +992,11 @@ export default function PaymentPage() {
         {/* Receive Block */}
         <Box bg="gray.900" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
           <Heading size="md" mb={4}>
-            Receive EUR
+            {t.tx.receiveEUR}
           </Heading>
           <VStack gap={4} align="stretch">
             <Text color="gray.400" fontSize="sm">
-              Send EUR to your Safe wallet address:
+              {t.tx.sendToSafeAddress}
             </Text>
 
             {/* QR Code */}
@@ -1017,7 +1007,7 @@ export default function PaymentPage() {
             {/* Address */}
             <Box>
               <Text fontSize="sm" color="gray.400" mb={2}>
-                Safe Address:
+                {t.tx.safeAddress}
               </Text>
               <HStack>
                 <Input
@@ -1028,7 +1018,7 @@ export default function PaymentPage() {
                   bg="gray.900"
                 />
                 <IconButton
-                  aria-label="Copy address"
+                  aria-label={t.tx.copyAddress}
                   onClick={() => copyToClipboard(safeAddress || '')}
                   colorScheme="purple"
                   variant="outline"
@@ -1039,8 +1029,22 @@ export default function PaymentPage() {
             </Box>
 
             <Text fontSize="sm" color="gray.500" textAlign="center">
-              Scan QR code or copy address to receive funds
+              {t.tx.scanQROrCopy}
             </Text>
+
+            {!paymentRequestDetected && (
+              <Button
+                bg="blue.600"
+                color="white"
+                _hover={{ bg: 'blue.500' }}
+                size="md"
+                onClick={onRequestModalOpen}
+                disabled={!sessionKey || isSessionKeyExpired || isSending || isCooldown}
+                width="full"
+              >
+                {t.tx.requestPayment}
+              </Button>
+            )}
           </VStack>
         </Box>
 
@@ -1059,7 +1063,7 @@ export default function PaymentPage() {
         {/* Quick Link */}
         <Box textAlign="center">
           <Button asChild variant="plain" size="sm" color="gray.500">
-            <a href="/safe">Go to Safe Dashboard →</a>
+            <a href="/safe">{t.tx.goToSafeDashboard} →</a>
           </Button>
         </Box>
       </VStack>
@@ -1073,12 +1077,12 @@ export default function PaymentPage() {
           <Dialog.Positioner>
             <Dialog.Content p={6}>
               <Dialog.Header>
-                <Dialog.Title>Request Payment</Dialog.Title>
+                <Dialog.Title>{t.tx.requestPaymentTitle}</Dialog.Title>
               </Dialog.Header>
               <Dialog.Body pt={4}>
                 {!isQRGenerated ? (
                   <>
-                    <Field label="Amount to Request (EUR)" required>
+                    <Field label={t.tx.amountToRequest} required>
                       <NumberInput.Root
                         value={requestAmount}
                         onValueChange={e => setRequestAmount(e.value)}
@@ -1101,14 +1105,14 @@ export default function PaymentPage() {
                 ) : (
                   <VStack gap={4} align="center">
                     <Text textAlign="center" fontSize={{ base: 'sm', md: 'md' }}>
-                      Scan this QR code to send payment
+                      {t.tx.scanQRToSendPayment}
                     </Text>
                     {qrData ? (
                       <Box p={{ base: 2, md: 4 }} bg="white" borderRadius="md">
                         <QRCodeSVG value={qrData} size={qrSize} />
                       </Box>
                     ) : (
-                      <Text>Loading QR code...</Text>
+                      <Text>{t.tx.loadingQR}</Text>
                     )}
                     <Text
                       textAlign="center"
@@ -1136,7 +1140,7 @@ export default function PaymentPage() {
                         flex="1"
                       >
                         <FaQrcode />
-                        Generate QR
+                        {t.tx.generateQR}
                       </Button>
 
                       {isWebNFCSupported ? (
@@ -1156,8 +1160,8 @@ export default function PaymentPage() {
                               writeNFC(paymentUrl)
                             } catch (err) {
                               toaster.create({
-                                title: 'Invalid Amount',
-                                description: 'Please enter a valid EUR amount.',
+                                title: t.tx.invalidAmount,
+                                description: t.tx.invalidAmountDesc,
                                 type: 'error',
                                 duration: 3000,
                               })
@@ -1167,23 +1171,22 @@ export default function PaymentPage() {
                           flex="1"
                         >
                           <FaSatellite />
-                          Write to NFC
+                          {t.tx.writeToNFC}
                         </Button>
                       ) : (
-                        <Tooltip
-                          content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
-                          showArrow={true}
-                        >
+                        <Tooltip content={t.tx.nfcTooltip} showArrow={true}>
                           <span style={{ flex: 1 }}>
                             <Button disabled bg="gray.600" width="full">
-                              NFC Not Available
+                              {t.tx.nfcNotAvailable}
                             </Button>
                           </span>
                         </Tooltip>
                       )}
                     </HStack>
                     <Dialog.ActionTrigger asChild>
-                      <Button variant="outline" width="full">Cancel</Button>
+                      <Button variant="outline" width="full">
+                        {t.tx.cancel}
+                      </Button>
                     </Dialog.ActionTrigger>
                   </VStack>
                 ) : (
@@ -1193,7 +1196,7 @@ export default function PaymentPage() {
                       onClick={handleRequestModalClose}
                       width="full"
                     >
-                      Close
+                      {t.tx.close}
                     </Button>
                   </VStack>
                 )}
