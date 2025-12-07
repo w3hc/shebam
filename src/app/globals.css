@@ -52,3 +52,17 @@ html {
 .skip-link:focus {
   top: 0;
 }
+
+/* Blinking animation for settling transactions */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.settling-text {
+  animation: blink 2.5s ease-in-out infinite;
+}

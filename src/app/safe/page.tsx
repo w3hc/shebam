@@ -178,7 +178,7 @@ export default function SafePage() {
             setCurrentSetupStep('deploying')
             setIsDeploying(true)
           },
-          onDeployed: (result) => {
+          onDeployed: result => {
             setSafeAddress(result.safeAddress)
             setSafeOwner(result.safeOwner)
             toaster.create({
@@ -205,7 +205,7 @@ export default function SafePage() {
             setCurrentSetupStep('creatingSessionKey')
             setIsCreatingSession(true)
           },
-          onSessionKeyCreated: (sessionKey) => {
+          onSessionKeyCreated: sessionKey => {
             setSessionKey(sessionKey)
             toaster.create({
               title: 'Session Key Created!',
@@ -214,7 +214,7 @@ export default function SafePage() {
               duration: 5000,
             })
           },
-          onError: (error) => {
+          onError: error => {
             console.error('Setup error:', error)
             setCurrentSetupStep('error')
             toaster.create({
@@ -604,28 +604,14 @@ export default function SafePage() {
           </Box>
         )}
 
-        {/* Info Box */}
-        <Box bg="gray.900" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
-          <Heading size="sm" mb={3}>
-            How It Works
-          </Heading>
-          <VStack align="start" gap={2} fontSize="sm" color="gray.400">
-            <Text>• Your Safe is controlled by your W3PK passkey (non-custodial)</Text>
-            <Text>• Session keys use derived addresses from your passkey</Text>
-            <Text>• You sign transactions with Face ID / Touch ID</Text>
-            <Text>• Relayer pays gas fees (gasless for you!)</Text>
-            <Text>• Session keys have spending limits and expiry times</Text>
-          </VStack>
-        </Box>
-
         {/* Faucet Button - Moved into its own box */}
         {safeAddress && currentSetupStep === 'idle' && (
           <Box mt={500} mb={50} mr={30} textAlign="right" pt={4}>
             <Button
-              size="sm"
-              bg={brandColors.accent}
+              size="xs"
+              bg={brandColors.primary}
               color="white"
-              _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+              _hover={{ bg: brandColors.primary, opacity: 0.8 }}
               onClick={mintEUR}
               loading={isMintingEUR}
             >

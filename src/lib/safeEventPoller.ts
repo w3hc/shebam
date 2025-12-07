@@ -6,6 +6,7 @@
  */
 
 import { Transaction } from './safeStorage'
+import { ethers } from 'ethers'
 
 export interface SafeTransactionEvent {
   blockNumber: number
@@ -242,8 +243,8 @@ export function transformEventToTransaction(
   return {
     txId: event.safeTxHash,
     txHash: event.transactionHash,
-    from: event.from, // Keep original from address
-    to: event.to, // Keep original to address
+    from: ethers.getAddress(event.from), // Checksum the from address
+    to: ethers.getAddress(event.to), // Checksum the to address
     amount: event.value,
     timestamp: event.blockTimestamp * 1000, // Convert to milliseconds
     status: 'confirmed', // Blockscout only returns confirmed transactions

@@ -314,13 +314,7 @@ export function TransactionHistory({
                       <Text
                         fontSize="xs"
                         color="blue.400"
-                        css={{
-                          '@keyframes blink': {
-                            '0%, 100%': { opacity: 1 },
-                            '50%': { opacity: 0.3 },
-                          },
-                          animation: 'blink 1.5s ease-in-out infinite',
-                        }}
+                        className="settling-text"
                       >
                         Settling this one...
                       </Text>

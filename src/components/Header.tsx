@@ -358,7 +358,6 @@ export default function Header() {
                       value={username}
                       onChange={e => setUsername(e.target.value)}
                       placeholder="Enter your username"
-                      pl={3}
                       onKeyDown={e => {
                         if (e.key === 'Enter' && username.trim()) {
                           handleRegister()
