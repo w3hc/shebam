@@ -124,7 +124,6 @@ const PasswordModal: React.FC<PasswordModalProps> = ({
               aria-describedby="password-requirements password-status"
               aria-invalid={passwordTouched && !isPasswordStrong ? true : undefined}
               autoFocus
-              pl={3}
             />
             {passwordTouched && !isPasswordStrong && (
               <Field.ErrorText id="password-status">

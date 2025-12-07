@@ -7,7 +7,8 @@ const NumberInputField = forwardRef<HTMLInputElement, any>((props, ref) => {
   return (
     <ChakraNumberInput.Input
       ref={ref}
-      px={3}
+      pl={3}
+      pr={3}
       py={2}
       bg="gray.900"
       borderColor="gray.600"

@@ -6,12 +6,13 @@ import {
   Box,
   Heading,
   Text,
-  Input,
   HStack,
   Badge,
   IconButton,
   Alert,
+  CloseButton,
 } from '@chakra-ui/react'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toaster } from '@/components/ui/toaster'
 import { Dialog, Portal } from '@/components/ui/dialog'
@@ -1071,20 +1072,11 @@ export default function PaymentPage() {
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content
-              bg="gray.800"
-              borderColor="gray.700"
-              color="white"
-              p={{ base: 4, md: 6 }}
-              maxW={{ base: '90vw', md: 'md' }}
-              maxH={{ base: '90vh', md: 'auto' }}
-              overflow="auto"
-            >
-              <Dialog.Header pb={{ base: 2, md: 4 }}>
-                <Dialog.Title fontSize={{ base: 'lg', md: 'xl' }}>Request Payment</Dialog.Title>
-                <Dialog.CloseTrigger />
+            <Dialog.Content p={6}>
+              <Dialog.Header>
+                <Dialog.Title>Request Payment</Dialog.Title>
               </Dialog.Header>
-              <Dialog.Body py={{ base: 2, md: 4 }}>
+              <Dialog.Body pt={4}>
                 {!isQRGenerated ? (
                   <>
                     <Field label="Amount to Request (EUR)" required>
@@ -1132,83 +1124,84 @@ export default function PaymentPage() {
                 )}
               </Dialog.Body>
 
-              <Dialog.Footer pt={{ base: 2, md: 4 }} gap={2} flexWrap="wrap">
+              <Dialog.Footer>
                 {!isQRGenerated ? (
-                  <>
-                    <Button
-                      bg="blue.600"
-                      color="white"
-                      _hover={{ bg: 'blue.500' }}
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleRequestPayment}
-                      disabled={!requestAmount || parseFloat(requestAmount) <= 0}
-                    >
-                      <FaQrcode />
-                      Generate QR
-                    </Button>
-
-                    {isWebNFCSupported ? (
+                  <VStack gap={3} width="full" pt={6}>
+                    <HStack gap={2} width="full" flexWrap="wrap">
                       <Button
-                        bg="green.600"
+                        bg={brandColors.accent}
                         color="white"
-                        _hover={{ bg: 'green.500' }}
-                        size={{ base: 'sm', md: 'md' }}
-                        onClick={() => {
-                          if (!safeAddress || !requestAmount) return
-                          try {
-                            const amountInWei = ethers.parseEther(requestAmount).toString()
-                            const paymentUrl = generatePaymentRequestUrl(
-                              safeAddress,
-                              amountInWei,
-                              EURO_TOKEN_ADDRESS
-                            )
-                            writeNFC(paymentUrl)
-                          } catch (err) {
-                            toaster.create({
-                              title: 'Invalid Amount',
-                              description: 'Please enter a valid EUR amount.',
-                              type: 'error',
-                              duration: 3000,
-                            })
-                          }
-                        }}
+                        _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                        onClick={handleRequestPayment}
                         disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                        flex="1"
                       >
-                        <FaSatellite />
-                        Write to NFC
+                        <FaQrcode />
+                        Generate QR
                       </Button>
-                    ) : (
-                      <Tooltip
-                        content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
-                        showArrow={true}
-                      >
-                        <span>
-                          <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
-                            NFC Not Available
-                          </Button>
-                        </span>
-                      </Tooltip>
-                    )}
 
+                      {isWebNFCSupported ? (
+                        <Button
+                          bg="green.600"
+                          color="white"
+                          _hover={{ bg: 'green.500' }}
+                          onClick={() => {
+                            if (!safeAddress || !requestAmount) return
+                            try {
+                              const amountInWei = ethers.parseEther(requestAmount).toString()
+                              const paymentUrl = generatePaymentRequestUrl(
+                                safeAddress,
+                                amountInWei,
+                                EURO_TOKEN_ADDRESS
+                              )
+                              writeNFC(paymentUrl)
+                            } catch (err) {
+                              toaster.create({
+                                title: 'Invalid Amount',
+                                description: 'Please enter a valid EUR amount.',
+                                type: 'error',
+                                duration: 3000,
+                              })
+                            }
+                          }}
+                          disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                          flex="1"
+                        >
+                          <FaSatellite />
+                          Write to NFC
+                        </Button>
+                      ) : (
+                        <Tooltip
+                          content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
+                          showArrow={true}
+                        >
+                          <span style={{ flex: 1 }}>
+                            <Button disabled bg="gray.600" width="full">
+                              NFC Not Available
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </HStack>
+                    <Dialog.ActionTrigger asChild>
+                      <Button variant="outline" width="full">Cancel</Button>
+                    </Dialog.ActionTrigger>
+                  </VStack>
+                ) : (
+                  <VStack gap={3} width="full" pt={6}>
                     <Button
-                      variant="ghost"
-                      size={{ base: 'sm', md: 'md' }}
+                      colorPalette="blue"
                       onClick={handleRequestModalClose}
+                      width="full"
                     >
                       Close
                     </Button>
-                  </>
-                ) : (
-                  <Button
-                    bg={brandColors.accent}
-                    color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
-                    onClick={handleRequestModalClose}
-                  >
-                    Close
-                  </Button>
+                  </VStack>
                 )}
               </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>
         </Portal>

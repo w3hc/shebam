@@ -7,7 +7,8 @@ export const Input = forwardRef<HTMLInputElement, React.ComponentProps<typeof Ch
   return (
     <ChakraInput
       ref={ref}
-      px={3}
+      pl={3}
+      pr={3}
       py={2}
       bg="gray.900"
       borderColor="gray.600"

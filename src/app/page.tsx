@@ -6,12 +6,13 @@ import {
   Box,
   Heading,
   Text,
-  Input,
   HStack,
   Badge,
   IconButton,
   Alert,
+  CloseButton,
 } from '@chakra-ui/react'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toaster } from '@/components/ui/toaster'
 import { Dialog, Portal } from '@/components/ui/dialog'
@@ -1180,20 +1181,11 @@ export default function PaymentPage() {
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content
-              bg="gray.800"
-              borderColor="gray.700"
-              color="white"
-              p={{ base: 4, md: 6 }}
-              maxW={{ base: '90vw', md: 'md' }}
-              maxH={{ base: '90vh', md: 'auto' }}
-              overflow="auto"
-            >
-              <Dialog.Header pb={{ base: 2, md: 4 }}>
-                <Dialog.Title fontSize={{ base: 'lg', md: 'xl' }}>Request Payment</Dialog.Title>
-                <Dialog.CloseTrigger />
+            <Dialog.Content p={6}>
+              <Dialog.Header>
+                <Dialog.Title>Request Payment</Dialog.Title>
               </Dialog.Header>
-              <Dialog.Body py={{ base: 2, md: 4 }}>
+              <Dialog.Body pt={4}>
                 {!isQRGenerated ? (
                   <>
                     <Field label="Amount to Request (EUR)" required>
@@ -1234,6 +1226,9 @@ export default function PaymentPage() {
                       color="gray.400"
                       wordBreak="break-all"
                       maxW="full"
+                      cursor="pointer"
+                      _hover={{ color: brandColors.accent }}
+                      onClick={() => copyToClipboard(qrData)}
                     >
                       {qrData}
                     </Text>
@@ -1241,17 +1236,17 @@ export default function PaymentPage() {
                 )}
               </Dialog.Body>
 
-              <Dialog.Footer pt={{ base: 2, md: 4 }}>
+              <Dialog.Footer>
                 {!isQRGenerated ? (
-                  <VStack align="stretch" width="full" gap={2}>
-                    <HStack gap={2} justify="flex-start">
+                  <VStack gap={3} width="full" pt={6}>
+                    <HStack gap={2} width="full" flexWrap="wrap">
                       <Button
                         bg={brandColors.accent}
                         color="white"
                         _hover={{ bg: brandColors.accent, opacity: 0.8 }}
-                        size={{ base: 'sm', md: 'md' }}
                         onClick={handleRequestPayment}
                         disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                        flex="1"
                       >
                         <FaQrcode />
                         Generate QR
@@ -1262,7 +1257,6 @@ export default function PaymentPage() {
                           bg="green.600"
                           color="white"
                           _hover={{ bg: 'green.500' }}
-                          size={{ base: 'sm', md: 'md' }}
                           onClick={() => {
                             if (!safeAddress || !requestAmount) return
                             try {
@@ -1283,6 +1277,7 @@ export default function PaymentPage() {
                             }
                           }}
                           disabled={!requestAmount || parseFloat(requestAmount) <= 0}
+                          flex="1"
                         >
                           <FaSatellite />
                           Write to NFC
@@ -1292,36 +1287,35 @@ export default function PaymentPage() {
                           content="NFC write requires HTTPS, Android device, Chrome browser, and NDEFWriter API support. Some devices may have restricted NFC write access."
                           showArrow={true}
                         >
-                          <span>
-                            <Button disabled bg="gray.600" size={{ base: 'sm', md: 'md' }}>
+                          <span style={{ flex: 1 }}>
+                            <Button disabled bg="gray.600" width="full">
                               NFC Not Available
                             </Button>
                           </span>
                         </Tooltip>
                       )}
                     </HStack>
-
-                    <HStack justify="flex-end">
-                      <Button
-                        variant="ghost"
-                        size={{ base: 'sm', md: 'md' }}
-                        onClick={handleRequestModalClose}
-                      >
-                        Close
-                      </Button>
-                    </HStack>
+                    <Dialog.ActionTrigger asChild>
+                      <Button variant="outline" width="full">Cancel</Button>
+                    </Dialog.ActionTrigger>
                   </VStack>
                 ) : (
-                  <Button
-                    bg={brandColors.accent}
-                    color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
-                    onClick={handleRequestModalClose}
-                  >
-                    Close
-                  </Button>
+                  <VStack gap={3} width="full" pt={6}>
+                    <Button
+                      bg={brandColors.accent}
+                      color="white"
+                      _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                      onClick={handleRequestModalClose}
+                      width="full"
+                    >
+                      Close
+                    </Button>
+                  </VStack>
                 )}
               </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>
         </Portal>
