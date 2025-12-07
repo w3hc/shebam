@@ -889,30 +889,187 @@ export default function PaymentPage() {
 
   if (!isAuthenticated) {
     return (
-      <Container maxW="container.md" py={20}>
-        <Box textAlign="center">
-          <Heading as="h1" size="xl" mb={4}>
-            {t.home.greeting}
-          </Heading>
-          <Text mb={6} color="gray.400">
-            {t.home.greetingSubtitle}
-          </Text>
-          <Text fontSize="sm" color="gray.500">
+      <Container maxW="container.lg" py={{ base: 10, md: 20 }}>
+        <VStack gap={{ base: 12, md: 16 }} align="stretch">
+          {/* Hero Section */}
+          <VStack gap={6} textAlign="center" py={{ base: 8, md: 12 }}>
+            <Box py={{ base: 4, md: 6 }}>
+              <Heading
+                as="h1"
+                fontSize={{ base: '5xl', md: '7xl', lg: '8xl' }}
+                fontWeight="black"
+                letterSpacing="tight"
+                lineHeight="1.1"
+                bgGradient="to-r"
+                gradientFrom={brandColors.primary}
+                gradientTo={brandColors.accent}
+                bgClip="text"
+              >
+                {t.home.heroTitle}
+              </Heading>
+            </Box>
+
             <Button
-              variant="plain"
-              as="span"
-              color="gray.500"
-              textDecorationStyle="dotted"
-              textUnderlineOffset="3px"
-              cursor="pointer"
-              _hover={{ color: 'gray.300' }}
+              size="lg"
+              bg={brandColors.accent}
+              color="white"
+              _hover={{ bg: brandColors.accent, opacity: 0.9, transform: 'scale(1.05)' }}
               onClick={login}
-              fontSize="sm"
+              fontSize={{ base: 'xl', md: '2xl' }}
+              px={{ base: 12, md: 16 }}
+              py={{ base: 7, md: 9 }}
+              minW={{ base: '280px', md: '320px' }}
+              borderRadius="lg"
+              fontWeight="bold"
+              transition="all 0.2s"
+              boxShadow="0 10px 40px rgba(138, 43, 226, 0.3)"
             >
-              {t.common.pleaseLogin}{' '}
+              {t.home.ctaButton}
             </Button>
-          </Text>
-        </Box>
+          </VStack>
+
+          {/* Features Grid */}
+          <VStack gap={6} align="stretch">
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="2px solid"
+              borderColor={brandColors.accent}
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.primary, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2} color={brandColors.accent}>
+                {t.home.feature1Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature1Desc}
+              </Text>
+            </Box>
+
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="gray.700"
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.accent, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2}>
+                {t.home.feature2Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature2Desc}
+              </Text>
+            </Box>
+
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="gray.700"
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.accent, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2}>
+                {t.home.feature3Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature3Desc}
+              </Text>
+            </Box>
+
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="gray.700"
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.accent, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2}>
+                {t.home.feature4Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature4Desc}
+              </Text>
+            </Box>
+
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="gray.700"
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.accent, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2}>
+                {t.home.feature5Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature5Desc}
+              </Text>
+            </Box>
+
+            <Box
+              bg="gray.900"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="gray.700"
+              transition="all 0.2s"
+              _hover={{ borderColor: brandColors.accent, transform: 'translateY(-2px)' }}
+            >
+              <Heading size={{ base: 'sm', md: 'md' }} mb={2}>
+                {t.home.feature6Title}
+              </Heading>
+              <Text color="gray.400" fontSize={{ base: 'sm', md: 'md' }}>
+                {t.home.feature6Desc}
+              </Text>
+            </Box>
+          </VStack>
+
+          {/* Coming Soon Section */}
+          <Box
+            bg="gray.900"
+            p={{ base: 6, md: 8 }}
+            borderRadius="xl"
+            border="1px solid"
+            borderColor="gray.700"
+            textAlign="center"
+          >
+            <Heading size={{ base: 'md', md: 'lg' }} mb={4} color={brandColors.primary}>
+              {t.home.comingSoonTitle}
+            </Heading>
+            <Text color="gray.400" fontSize={{ base: 'md', md: 'lg' }}>
+              • {t.home.comingSoon1}
+            </Text>
+          </Box>
+
+          {/* Bottom CTA */}
+          <VStack gap={4} textAlign="center" py={{ base: 4, md: 8 }}>
+            <Button
+              size="lg"
+              bg={brandColors.accent}
+              color="white"
+              _hover={{ bg: brandColors.accent, opacity: 0.9, transform: 'scale(1.05)' }}
+              onClick={login}
+              fontSize={{ base: 'lg', md: 'xl' }}
+              px={{ base: 10, md: 14 }}
+              py={{ base: 6, md: 8 }}
+              minW={{ base: '260px', md: '300px' }}
+              borderRadius="lg"
+              fontWeight="bold"
+              transition="all 0.2s"
+            >
+              {t.home.ctaButton}
+            </Button>
+          </VStack>
+        </VStack>
       </Container>
     )
   }
