@@ -354,24 +354,23 @@ export default function PaymentPage() {
         // Check if this is a self-send (sender is also the Safe address)
         const isSelfSend = update.from?.toLowerCase() === safeAddress.toLowerCase()
 
-        // Auto-close payment request modal if it's open and amount matches
-        // This triggers immediately when we receive ANY incoming transaction update
-        if (isRequestModalOpenRef.current && requestAmountRef.current && qrDataRef.current) {
-          try {
-            const requestedAmountWei = ethers.parseEther(requestAmountRef.current).toString()
-            const receivedAmountWei = update.amount || '0'
-
-            // Close modal if the received amount matches the requested amount
-            if (requestedAmountWei === receivedAmountWei) {
-              console.log('Auto-closing payment request modal - payment received!')
-              handleRequestModalClose()
-            }
-          } catch (error) {
-            console.error('Error comparing amounts for modal auto-close:', error)
-          }
-        }
-
         if (update.status === 'verified') {
+          // Auto-close payment request modal if it's open and amount matches
+          if (isRequestModalOpenRef.current && requestAmountRef.current && qrDataRef.current) {
+            try {
+              const requestedAmountWei = ethers.parseEther(requestAmountRef.current).toString()
+              const receivedAmountWei = update.amount || '0'
+
+              // Close modal if the received amount matches the requested amount
+              if (requestedAmountWei === receivedAmountWei) {
+                console.log('Auto-closing payment request modal - payment received!')
+                handleRequestModalClose()
+              }
+            } catch (error) {
+              console.error('Error comparing amounts for modal auto-close:', error)
+            }
+          }
+
           // Skip adding to pending if it's a self-send (already added by outgoing WebSocket)
           if (!isSelfSend) {
             toaster.create({
