@@ -1,4 +1,3 @@
-// app/settings/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -371,41 +370,8 @@ const SettingsPage = () => {
     try {
       const storedAccounts: StoredAccount[] = []
 
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const keys = Object.keys(localStorage)
-
-        keys.forEach(key => {
-          try {
-            const value = localStorage.getItem(key)
-            if (value) {
-              try {
-                const parsed = JSON.parse(value)
-                if (parsed.username && parsed.ethereumAddress) {
-                  storedAccounts.push({
-                    username: parsed.username,
-                    ethereumAddress: parsed.ethereumAddress,
-                    id: parsed.id || parsed.username,
-                    displayName: parsed.displayName,
-                  })
-                } else if (parsed.user && parsed.user.username && parsed.user.ethereumAddress) {
-                  storedAccounts.push({
-                    username: parsed.user.username,
-                    ethereumAddress: parsed.user.ethereumAddress,
-                    id: parsed.user.id || parsed.user.username,
-                    displayName: parsed.user.displayName,
-                  })
-                }
-              } catch (e) {
-                // Not JSON
-              }
-            }
-          } catch (e) {
-            // Skip invalid keys
-          }
-        })
-      }
-
-      if (user && !storedAccounts.find(acc => acc.ethereumAddress === user.ethereumAddress)) {
+      // Only show the current logged-in user
+      if (user) {
         storedAccounts.push({
           username: user.username,
           ethereumAddress: user.ethereumAddress,
@@ -414,11 +380,7 @@ const SettingsPage = () => {
         })
       }
 
-      const uniqueAccounts = Array.from(
-        new Map(storedAccounts.map(acc => [acc.ethereumAddress, acc])).values()
-      )
-
-      setAccounts(uniqueAccounts)
+      setAccounts(storedAccounts)
     } catch (error) {
       console.error('Error loading accounts:', error)
     }
@@ -675,10 +637,10 @@ const SettingsPage = () => {
       <>
         <VStack gap={8} align="stretch" py={20}>
           <Box textAlign="center">
-            <Heading as="h1" size="xl" mb={4}>
+            <Heading as="h1" size="2xl" mb={4}>
               {t.settings.title}
             </Heading>
-            <Text fontSize="md" color="gray.400" mb={6}>
+            <Text fontSize="xl" color="gray.400" maxW="2xl" mx="auto">
               {t.settings.loginRequired}
             </Text>
           </Box>
@@ -854,9 +816,9 @@ const SettingsPage = () => {
               If you have a backup file, you can restore your wallet without logging in first.
             </Text>
             <Button
-              bg={brandColors.accent}
+              bg={brandColors.primary}
               color="white"
-              _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+              _hover={{ bg: brandColors.secondary }}
               onClick={handleRestoreBackup}
               loading={isRestoring}
               spinner={<Spinner size="200px" />}
@@ -866,6 +828,30 @@ const SettingsPage = () => {
             >
               <Icon as={FiUpload} mr={2} />
               Restore from Backup File
+            </Button>
+          </Box>
+
+          {/* Register a new account */}
+          <Box bg="gray.900" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
+            <HStack mb={4}>
+              <Icon as={FiUserPlus} color={brandColors.primary} boxSize={6} />
+              <Heading size="md">Register a new account</Heading>
+            </HStack>
+            <Text fontSize="sm" color="gray.400" mb={4}>
+              Create a new Web3 passkey account. Each account is secured with your device&apos;s
+              biometric authentication or PIN, and has its own Ethereum wallet.
+            </Text>
+            <Button
+              bg={brandColors.primary}
+              color="white"
+              _hover={{
+                bg: brandColors.secondary,
+              }}
+              onClick={onRegisterModalOpen}
+              width="full"
+            >
+              <Icon as={FiUserPlus} />
+              Register
             </Button>
           </Box>
 
@@ -1058,6 +1044,87 @@ const SettingsPage = () => {
           title={`Enter Password to Restore Backup`}
           description={`Please enter the password you used when creating this backup file.`}
         />
+
+        {/* Registration Modal - Available without authentication */}
+        <Dialog.Root
+          open={isRegisterModalOpen}
+          onOpenChange={(e: { open: boolean }) => (e.open ? null : handleRegisterModalClose())}
+        >
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content p={6}>
+                <Dialog.Header>
+                  <Dialog.Title>Register New Account</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body pt={4}>
+                  <VStack gap={4}>
+                    <Text fontSize="sm" color="gray.400">
+                      An Ethereum wallet will be created and securely stored on your device,
+                      protected by your biometric or PIN thanks to{' '}
+                      <ChakraLink
+                        href={
+                          'https://github.com/w3hc/w3pk/blob/main/src/auth/register.ts#L17-L102'
+                        }
+                        color={brandColors.accent}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        w3pk
+                      </ChakraLink>
+                      .
+                    </Text>
+                    <Field invalid={isRegisterUsernameInvalid} label="Username">
+                      <Input
+                        id="username-input"
+                        aria-describedby={
+                          isRegisterUsernameInvalid && registerUsername.trim()
+                            ? 'username-error'
+                            : undefined
+                        }
+                        aria-invalid={
+                          isRegisterUsernameInvalid && registerUsername.trim() ? true : undefined
+                        }
+                        value={registerUsername}
+                        onChange={e => setRegisterUsername(e.target.value)}
+                        placeholder="Enter your username"
+                        pl={3}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && registerUsername.trim()) {
+                            handleRegister()
+                          }
+                        }}
+                      />
+                      {isRegisterUsernameInvalid && registerUsername.trim() && (
+                        <Field.ErrorText id="username-error">
+                          Username must be 3-50 characters long and contain only letters, numbers,
+                          underscores, and hyphens. It must start and end with a letter or number.
+                        </Field.ErrorText>
+                      )}
+                    </Field>
+                  </VStack>
+                </Dialog.Body>
+
+                <Dialog.Footer gap={3} pt={6}>
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </Dialog.ActionTrigger>
+                  <Button
+                    colorPalette="blue"
+                    onClick={handleRegister}
+                    disabled={!registerUsername.trim()}
+                  >
+                    {isRegistering && <Spinner size="42px" />}
+                    {!isRegistering && 'Create Account'}
+                  </Button>
+                </Dialog.Footer>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" />
+                </Dialog.CloseTrigger>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
       </>
     )
   }
@@ -1510,10 +1577,10 @@ const SettingsPage = () => {
     <>
       <VStack gap={8} align="stretch" py={20}>
         <Box textAlign="center">
-          <Heading as="h1" size="xl" mb={4}>
+          <Heading as="h1" size="2xl" mb={4}>
             {t.settings.title}
           </Heading>
-          <Text fontSize="md" color="gray.400" mb={6}>
+          <Text fontSize="xl" color="gray.400" maxW="2xl" mx="auto">
             Manage your accounts, backups, and recovery options
           </Text>
         </Box>
@@ -1651,18 +1718,17 @@ const SettingsPage = () => {
             <VStack gap={6} align="stretch">
               <Box>
                 <Heading as="h2" size="lg" mb={4}>
-                  Accounts on this Device
+                  Current account
                 </Heading>
                 <Text fontSize="md" color="gray.400" mb={6}>
-                  These are all the accounts stored on this device. You can remove any account to
-                  free up space.
+                  This is your currently logged-in account.
                 </Text>
               </Box>
 
               {accounts.length === 0 ? (
                 <Box
                   bg="gray.900"
-                  p={6}
+                  p={8}
                   borderRadius="lg"
                   textAlign="center"
                   border="1px solid"
@@ -1689,7 +1755,7 @@ const SettingsPage = () => {
                     }
                   >
                     <HStack justify="space-between" align="start">
-                      <Box flex={1}>
+                      <Box flex={1} minW={0}>
                         <HStack mb={3}>
                           <Text fontSize="lg" fontWeight="bold" color="white">
                             {account.displayName || account.username}
@@ -1701,7 +1767,16 @@ const SettingsPage = () => {
                         <Text fontSize="sm" color="gray.400" mb={2}>
                           Username: {account.username}
                         </Text>
-                        <Code fontSize="xs" bg="gray.800" color="gray.300" p={2} borderRadius="md">
+                        <Code
+                          fontSize="xs"
+                          bg="gray.800"
+                          color="gray.300"
+                          p={2}
+                          borderRadius="md"
+                          display="block"
+                          wordBreak="break-all"
+                          overflowWrap="break-word"
+                        >
                           {account.ethereumAddress}
                         </Code>
                       </Box>
@@ -1711,6 +1786,7 @@ const SettingsPage = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteAccount(account)}
+                        flexShrink={0}
                       >
                         <MdDelete />
                       </IconButton>
@@ -1786,14 +1862,13 @@ const SettingsPage = () => {
                   biometric authentication or PIN, and has its own Ethereum wallet.
                 </Text>
                 <Button
-                  bg={brandColors.accent}
+                  bg={brandColors.primary}
                   color="white"
                   _hover={{
-                    bg: brandColors.accent,
-                    opacity: 0.8,
+                    bg: brandColors.secondary,
                   }}
                   onClick={onRegisterModalOpen}
-                  size="md"
+                  width="full"
                 >
                   <Icon as={FiUserPlus} />
                   Register
@@ -1917,9 +1992,9 @@ const SettingsPage = () => {
                     Reload your current security score and backup recommendations
                   </Text>
                   <Button
-                    bg={brandColors.accent}
+                    bg={brandColors.primary}
                     color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                    _hover={{ bg: brandColors.secondary }}
                     onClick={handleGetBackupStatus}
                     loading={isCheckingStatus}
                     spinner={<Spinner size="50px" />}
@@ -1948,9 +2023,9 @@ const SettingsPage = () => {
                     Download an encrypted backup file protected by your password
                   </Text>
                   <Button
-                    bg={brandColors.accent}
+                    bg={brandColors.primary}
                     color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                    _hover={{ bg: brandColors.secondary }}
                     onClick={handleCreateBackup}
                     loading={isCreatingBackup}
                     spinner={<Spinner size="50px" />}
@@ -1981,9 +2056,9 @@ const SettingsPage = () => {
                     &nbsp;
                   </Text>
                   <Button
-                    bg={brandColors.accent}
+                    bg={brandColors.primary}
                     color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                    _hover={{ bg: brandColors.secondary }}
                     onClick={handleRestoreBackup}
                     loading={isRestoring}
                     spinner={<Spinner size="50px" />}
@@ -2178,9 +2253,9 @@ const SettingsPage = () => {
                       {/* Setup Button */}
                       <Button
                         onClick={handleSetupSocialRecovery}
-                        bg={brandColors.accent}
+                        bg={brandColors.primary}
                         color="white"
-                        _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                        _hover={{ bg: brandColors.secondary }}
                         disabled={guardiansList.length < 2}
                         width="full"
                       >
@@ -2517,9 +2592,9 @@ const SettingsPage = () => {
                         <VStack gap={3}>
                           <Button
                             onClick={handleDownloadInvite}
-                            bg={brandColors.accent}
+                            bg={brandColors.primary}
                             color="white"
-                            _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                            _hover={{ bg: brandColors.secondary }}
                             width="full"
                           >
                             <Icon as={FiDownload} mr={2} />
@@ -2564,9 +2639,9 @@ const SettingsPage = () => {
 
                 {!showQRCode ? (
                   <Button
-                    bg={brandColors.accent}
+                    bg={brandColors.primary}
                     color="white"
-                    _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                    _hover={{ bg: brandColors.secondary }}
                     onClick={handleGenerateQRCode}
                     disabled={!index0Address || !mainAddress}
                     width="full"
@@ -2622,6 +2697,7 @@ const SettingsPage = () => {
                     bg="gray.950"
                     borderColor="gray.700"
                     _focus={{ borderColor: brandColors.primary }}
+                    p={3}
                   />
 
                   {parsedQRData && (
@@ -2733,9 +2809,9 @@ const SettingsPage = () => {
                       {!parsedQRData.error && (
                         <>
                           <Button
-                            bg={brandColors.accent}
+                            bg={brandColors.primary}
                             color="white"
-                            _hover={{ bg: brandColors.accent, opacity: 0.8 }}
+                            _hover={{ bg: brandColors.secondary }}
                             onClick={handleSaveQRDataToStorage}
                             width="full"
                           >
@@ -3112,85 +3188,6 @@ const SettingsPage = () => {
               </Dialog.Body>
               <Dialog.Footer gap={3} pt={6}>
                 <Button onClick={() => setShowIndexedDBModal(false)}>Close</Button>
-              </Dialog.Footer>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
-
-      {/* Registration Modal */}
-      <Dialog.Root
-        open={isRegisterModalOpen}
-        onOpenChange={(e: { open: boolean }) => (e.open ? null : handleRegisterModalClose())}
-      >
-        <Portal>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content p={6}>
-              <Dialog.Header>
-                <Dialog.Title>Register New Account</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body pt={4}>
-                <VStack gap={4}>
-                  <Text fontSize="sm" color="gray.400">
-                    An Ethereum wallet will be created and securely stored on your device, protected
-                    by your biometric or PIN thanks to{' '}
-                    <ChakraLink
-                      href={'https://github.com/w3hc/w3pk/blob/main/src/auth/register.ts#L17-L102'}
-                      color={brandColors.accent}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      w3pk
-                    </ChakraLink>
-                    .
-                  </Text>
-                  <Field invalid={isRegisterUsernameInvalid} label="Username">
-                    <Input
-                      id="username-input"
-                      aria-describedby={
-                        isRegisterUsernameInvalid && registerUsername.trim()
-                          ? 'username-error'
-                          : undefined
-                      }
-                      aria-invalid={
-                        isRegisterUsernameInvalid && registerUsername.trim() ? true : undefined
-                      }
-                      value={registerUsername}
-                      onChange={e => setRegisterUsername(e.target.value)}
-                      placeholder="Enter your username"
-                      pl={3}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && registerUsername.trim()) {
-                          handleRegister()
-                        }
-                      }}
-                    />
-                    {isRegisterUsernameInvalid && registerUsername.trim() && (
-                      <Field.ErrorText id="username-error">
-                        Username must be 3-50 characters long and contain only letters, numbers,
-                        underscores, and hyphens. It must start and end with a letter or number.
-                      </Field.ErrorText>
-                    )}
-                  </Field>
-                </VStack>
-              </Dialog.Body>
-
-              <Dialog.Footer gap={3} pt={6}>
-                <Dialog.ActionTrigger asChild>
-                  <Button variant="outline">Cancel</Button>
-                </Dialog.ActionTrigger>
-                <Button
-                  colorPalette="blue"
-                  onClick={handleRegister}
-                  disabled={!registerUsername.trim()}
-                >
-                  {isRegistering && <Spinner size="42px" />}
-                  {!isRegistering && 'Create Account'}
-                </Button>
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" />
