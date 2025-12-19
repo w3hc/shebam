@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
 
     if (!safeAddress || !to || !data || !ownerAddress || !signature || !chainId) {
       return NextResponse.json(
-        { error: 'Missing required fields: safeAddress, to, data, ownerAddress, signature, chainId' },
+        {
+          error: 'Missing required fields: safeAddress, to, data, ownerAddress, signature, chainId',
+        },
         { status: 400 }
       )
     }
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
     console.log(`   Safe threshold: ${threshold}`)
 
     // Verify the owner address is actually an owner
-    const isOwner = owners.some((owner) => owner.toLowerCase() === ownerAddress.toLowerCase())
+    const isOwner = owners.some(owner => owner.toLowerCase() === ownerAddress.toLowerCase())
     if (!isOwner) {
       return NextResponse.json(
         {

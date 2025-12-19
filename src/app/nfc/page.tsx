@@ -1,15 +1,6 @@
 'use client'
 
-import {
-  Container,
-  VStack,
-  Box,
-  Heading,
-  Text,
-  HStack,
-  Code,
-  Separator,
-} from '@chakra-ui/react'
+import { Container, VStack, Box, Heading, Text, HStack, Code, Separator } from '@chakra-ui/react'
 import { Card } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -401,8 +392,7 @@ export default function NFCDebugPage() {
       } else if (error.name === 'NotSupportedError') {
         errorMessage = 'NFC is not supported on this device or browser.'
       } else if (error.message.includes('not available')) {
-        errorMessage =
-          'NDEFReader not available. Enable Chrome flags or check system NFC settings.'
+        errorMessage = 'NDEFReader not available. Enable Chrome flags or check system NFC settings.'
       }
 
       toaster.create({
@@ -502,9 +492,7 @@ export default function NFCDebugPage() {
 
             {!isNFCSupported && debugInfo.hasNDEFReader && !debugInfo.hasNDEFWriter && (
               <Alert.Root
-                status={
-                  debugInfo.nfcPermissionState === 'granted' ? 'error' : 'warning'
-                }
+                status={debugInfo.nfcPermissionState === 'granted' ? 'error' : 'warning'}
                 mt={4}
                 borderRadius="md"
               >
@@ -846,9 +834,7 @@ export default function NFCDebugPage() {
                   <Text
                     fontWeight="semibold"
                     mb={1}
-                    color={
-                      debugInfo.nfcPermissionState === 'granted' ? 'gray.400' : 'orange.300'
-                    }
+                    color={debugInfo.nfcPermissionState === 'granted' ? 'gray.400' : 'orange.300'}
                   >
                     1. Check Site Permissions{' '}
                     {debugInfo.nfcPermissionState === 'granted' ? '✅ Done' : '(Try First!)'}
@@ -890,9 +876,7 @@ export default function NFCDebugPage() {
                     color={debugInfo.nfcPermissionState === 'granted' ? 'orange.300' : 'gray.400'}
                   >
                     2. Enable Chrome Flags{' '}
-                    {debugInfo.nfcPermissionState === 'granted'
-                      ? '⚠️ TRY THIS!'
-                      : '(if needed)'}
+                    {debugInfo.nfcPermissionState === 'granted' ? '⚠️ TRY THIS!' : '(if needed)'}
                   </Text>
                   <Text color="gray.300" fontSize="xs">
                     Type <Code>chrome://flags</Code> in your browser and enable:

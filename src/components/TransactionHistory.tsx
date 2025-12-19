@@ -104,12 +104,7 @@ export function TransactionHistory({
           <Heading size="md">Transaction History</Heading>
           <ChakraTooltip.Root>
             <ChakraTooltip.Trigger asChild>
-              <IconButton
-                aria-label="Retry"
-                size="sm"
-                variant="ghost"
-                onClick={onRefresh}
-              >
+              <IconButton aria-label="Retry" size="sm" variant="ghost" onClick={onRefresh}>
                 <FiRefreshCw />
               </IconButton>
             </ChakraTooltip.Trigger>
@@ -164,7 +159,7 @@ export function TransactionHistory({
             </ChakraTooltip.Positioner>
           </ChakraTooltip.Root>
         </HStack>
-          {/* {isRefetchingAfterConfirmation ? (
+        {/* {isRefetchingAfterConfirmation ? (
             // <CustomSpinner size="100px" />
             ' '
           ) : (
@@ -311,11 +306,7 @@ export function TransactionHistory({
                         </IconButton>
                       </HStack>
                     ) : (
-                      <Text
-                        fontSize="xs"
-                        color="blue.400"
-                        className="settling-text"
-                      >
+                      <Text fontSize="xs" color="blue.400" className="settling-text">
                         Settling this one...
                       </Text>
                     )}

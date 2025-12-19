@@ -53,9 +53,7 @@ export interface SafeActionsConfig {
 /**
  * Deploy a Safe wallet for the user
  */
-export async function deploySafe(
-  config: SafeActionsConfig
-): Promise<SafeDeploymentResult> {
+export async function deploySafe(config: SafeActionsConfig): Promise<SafeDeploymentResult> {
   try {
     const ownerWallet = await config.deriveWallet('STANDARD', 'OWNER')
 

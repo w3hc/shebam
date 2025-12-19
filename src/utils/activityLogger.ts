@@ -19,10 +19,7 @@ export interface ActivityLog {
 /**
  * Logs an activity to the logs.md file
  */
-export async function logActivity(
-  type: ActivityType,
-  errorMessage?: string
-): Promise<void> {
+export async function logActivity(type: ActivityType, errorMessage?: string): Promise<void> {
   try {
     const browserInfo = detectBrowser()
     const now = new Date()
@@ -91,4 +88,3 @@ export async function logActivity(
     console.error('Failed to log activity:', error)
   }
 }
-
