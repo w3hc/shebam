@@ -1232,23 +1232,6 @@ export default function PaymentPage() {
             </Box>
           </VStack>
 
-          {/* Coming Soon Section */}
-          <Box
-            bg="gray.900"
-            p={{ base: 6, md: 8 }}
-            borderRadius="xl"
-            border="1px solid"
-            borderColor="gray.700"
-            textAlign="center"
-          >
-            <Heading size={{ base: 'md', md: 'lg' }} mb={4} color={brandColors.primary}>
-              {t.home.comingSoonTitle}
-            </Heading>
-            <Text color="gray.400" fontSize={{ base: 'md', md: 'lg' }}>
-              • {t.home.comingSoon1}
-            </Text>
-          </Box>
-
           {/* Bottom CTA */}
           <VStack gap={4} textAlign="center" py={{ base: 4, md: 8 }}>
             <Button
