@@ -68,7 +68,7 @@ export default function PaymentPage() {
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
   const onRequestModalOpen = () => setIsRequestModalOpen(true)
-  const onRequestModalClose = () => setIsRequestModalOpen(false)
+  const onRequestModalClose = useCallback(() => setIsRequestModalOpen(false), [])
   const [requestAmount, setRequestAmount] = useState<string>('')
   const [isQRGenerated, setIsQRGenerated] = useState<boolean>(false)
   const [qrData, setQrData] = useState<string>('')
