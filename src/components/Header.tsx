@@ -42,8 +42,6 @@ export default function Header() {
   const leftSlideValue = shouldSlide ? 2000 : 0
   const rightSlideValue = shouldSlide ? 2000 : 0
 
-  const GitHubIcon = FaGithub
-
   useEffect(() => {
     const handleScroll = () => {
       setScrollPosition(window.scrollY)

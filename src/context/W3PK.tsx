@@ -80,15 +80,11 @@ interface StealthAddressResult {
   viewTag: string
 }
 
-// Signing options
-type SigningMethod = 'EIP191' | 'rawHash'
-type SecurityMode = 'STANDARD' | 'STRICT' | 'YOLO'
-
 interface SignMessageOptions {
-  mode?: SecurityMode // Security mode: STANDARD, STRICT, or YOLO
-  tag?: string // Tag for derivation (default: 'MAIN')
-  requireAuth?: boolean // Force fresh authentication
-  signingMethod?: SigningMethod // Signing method: EIP191 or rawHash
+  mode?: string
+  tag?: string
+  requireAuth?: boolean
+  signingMethod?: 'EIP191' | 'rawHash'
 }
 
 interface W3pkType {
@@ -107,6 +103,11 @@ interface W3pkType {
     backupData: string,
     password: string
   ) => Promise<{ mnemonic: string; ethereumAddress: string }>
+  registerWithBackupFile: (
+    backupData: string,
+    password: string,
+    username: string
+  ) => Promise<{ address: string; username: string }>
   setupSocialRecovery: (
     guardians: { name: string; email?: string; phone?: string }[],
     threshold: number,
@@ -140,6 +141,9 @@ const W3PK = createContext<W3pkType>({
   },
   restoreFromBackup: async () => {
     throw new Error('restoreFromBackup not initialized')
+  },
+  registerWithBackupFile: async () => {
+    throw new Error('registerWithBackupFile not initialized')
   },
   setupSocialRecovery: async () => {
     throw new Error('setupSocialRecovery not initialized')
@@ -347,14 +351,6 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
       await Promise.race([registrationPromise, timeoutPromise])
 
       console.log('[W3PK] Registration successful')
-
-      // toaster.create({
-      //   title: 'Done! 🎉',
-      //   description:
-      //     "Your encrypted wallet has been created and stored on your device. Don't forget to back it up!",
-      //   type: 'success',
-      //   duration: 3000,
-      // })
     } catch (error) {
       console.error('[W3PK] Registration failed:', error)
 
@@ -447,33 +443,10 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
 
     try {
       await ensureAuthentication()
-
-      // Build w3pk signMessage options
-      const w3pkOptions: any = {}
-
-      if (options?.mode) {
-        w3pkOptions.mode = options.mode
-      }
-
-      if (options?.tag) {
-        w3pkOptions.tag = options.tag
-      }
-
-      if (options?.requireAuth !== undefined) {
-        w3pkOptions.requireAuth = options.requireAuth
-      }
-
-      if (options?.signingMethod) {
-        w3pkOptions.signingMethod = options.signingMethod
-      }
-
-      const result = await w3pk.signMessage(message, w3pkOptions)
+      const result = await w3pk.signMessage(message, options as any)
 
       // Extend session after successful operation for better UX
-      // Note: STRICT mode sessions are never persisted
-      if (options?.mode !== 'STRICT') {
-        w3pk.extendSession()
-      }
+      w3pk.extendSession()
 
       return result.signature
     } catch (error) {
@@ -729,6 +702,49 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
 
       toaster.create({
         title: 'Restore Failed',
+        description: errorMessage,
+        type: 'error',
+        duration: 5000,
+      })
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const registerWithBackupFile = async (
+    backupData: string,
+    password: string,
+    username: string
+  ): Promise<{ address: string; username: string }> => {
+    if (!w3pk || typeof w3pk.registerWithBackupFile !== 'function') {
+      throw new Error('w3pk SDK does not support registerWithBackupFile.')
+    }
+
+    try {
+      setIsLoading(true)
+      console.log('[W3PK] Registration with backup file initiated for username:', username)
+
+      const result = await w3pk.registerWithBackupFile(backupData, password, username)
+
+      console.log('[W3PK] Registration with backup successful')
+
+      toaster.create({
+        title: 'Wallet Restored & Registered! 🎉',
+        description: `Your wallet has been restored and secured with a new passkey: ${result.address.slice(0, 6)}...${result.address.slice(-4)}`,
+        type: 'success',
+        duration: 5000,
+      })
+
+      return result
+    } catch (error) {
+      console.error('[W3PK] Registration with backup failed:', error)
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to register with backup file'
+
+      toaster.create({
+        title: 'Registration Failed',
         description: errorMessage,
         type: 'error',
         duration: 5000,
@@ -1086,6 +1102,7 @@ Thank you for being a trusted guardian!
         getBackupStatus,
         createBackup,
         restoreFromBackup,
+        registerWithBackupFile,
         setupSocialRecovery,
         getSocialRecoveryConfig,
         generateGuardianInvite,

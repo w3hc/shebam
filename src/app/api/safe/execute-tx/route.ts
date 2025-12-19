@@ -93,8 +93,19 @@ export async function POST(request: NextRequest) {
     console.log(`   Adding owner signature...`)
     console.log(`   Raw signature: ${signature}`)
 
-    // The signature is now directly signed over the Safe transaction hash
-    // No prefix adjustment needed since we're using ethers.SigningKey directly
+    // Safe expects v to be 27 or 28, but sometimes wallets return 0 or 1
+    // Adjust v value if needed (last byte of signature)
+    let adjustedSignature = signature
+    if (signature.length === 132) {
+      // 0x + 64 chars (r) + 64 chars (s) + 2 chars (v) = 132
+      const v = parseInt(signature.slice(-2), 16)
+      if (v < 27) {
+        // Adjust v to be 27 or 28 (add 27 if it's 0 or 1)
+        const adjustedV = (v + 27).toString(16).padStart(2, '0')
+        adjustedSignature = signature.slice(0, -2) + adjustedV
+        console.log(`   Adjusted v from ${v} to ${v + 27}`)
+      }
+    }
 
     // Add the owner's signature to the transaction
     const signedSafeTx = await protocolKit.copyTransaction(safeTransaction)
@@ -102,9 +113,9 @@ export async function POST(request: NextRequest) {
     // Create a proper SafeSignature object
     const safeSignature = {
       signer: ownerAddress,
-      data: signature,
+      data: adjustedSignature,
       isContractSignature: false,
-      staticPart: () => signature,
+      staticPart: () => adjustedSignature,
       dynamicPart: () => '',
     }
 

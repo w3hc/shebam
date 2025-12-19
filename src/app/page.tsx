@@ -72,6 +72,7 @@ export default function PaymentPage() {
   const [isOnboarding, setIsOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('deploying-safe')
   const [onboardingError, setOnboardingError] = useState<string | undefined>()
+  const onboardingInProgressRef = useRef(false)
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
   const onRequestModalOpen = () => setIsRequestModalOpen(true)
@@ -212,6 +213,14 @@ export default function PaymentPage() {
   const startOnboarding = async () => {
     if (!user || !deriveWallet || !signMessage) return
 
+    // Prevent duplicate onboarding (e.g., from React Strict Mode double rendering)
+    if (onboardingInProgressRef.current) {
+      console.log('Onboarding already in progress, skipping...')
+      return
+    }
+
+    onboardingInProgressRef.current = true
+
     try {
       setOnboardingStep('deploying-safe')
       setOnboardingError(undefined)
@@ -243,6 +252,19 @@ export default function PaymentPage() {
           onSessionKeyCreated: key => {
             setOnboardingStep('session-key-created')
             setSessionKey(key)
+
+            // Save session key to localStorage
+            if (user) {
+              const existingData = localStorage.getItem(`safe_${user.id}`)
+              const existing = existingData ? JSON.parse(existingData) : {}
+              localStorage.setItem(
+                `safe_${user.id}`,
+                JSON.stringify({
+                  ...existing,
+                  sessionKey: key,
+                })
+              )
+            }
           },
           onError: error => {
             setOnboardingError(error)
@@ -255,10 +277,14 @@ export default function PaymentPage() {
         // Wait a moment to show the complete state
         setTimeout(() => {
           setIsOnboarding(false)
+          onboardingInProgressRef.current = false
         }, 2000)
+      } else {
+        onboardingInProgressRef.current = false
       }
     } catch (error: any) {
       setOnboardingError(error.message || 'An error occurred during setup')
+      onboardingInProgressRef.current = false
     }
   }
 
