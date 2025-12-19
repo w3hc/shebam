@@ -11,6 +11,7 @@ import {
   IconButton,
   Alert,
   CloseButton,
+  Link as ChakraLink,
 } from '@chakra-ui/react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,7 @@ import { brandColors } from '@/theme'
 import { useTranslation } from '@/hooks/useTranslation'
 import { OnboardingProgress, OnboardingStep } from '@/components/OnboardingProgress'
 import { setupSafeWithSessionKey } from '@/lib/safeActions'
+import Spinner from '@/components/Spinner'
 
 interface SessionKey {
   sessionKeyAddress: string
@@ -47,7 +49,7 @@ interface SessionKey {
 }
 
 export default function PaymentPage() {
-  const { isAuthenticated, user, deriveWallet, login, signMessage } = useW3PK()
+  const { isAuthenticated, user, deriveWallet, login, signMessage, register } = useW3PK()
   const t = useTranslation()
 
   // State
@@ -83,6 +85,12 @@ export default function PaymentPage() {
   const [isWebNFCSupported, setIsWebNFCSupported] = useState(false)
   const [qrSize, setQrSize] = useState(200)
 
+  // Registration modal state
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
+  const [username, setUsername] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [isUsernameInvalid, setIsUsernameInvalid] = useState(false)
+
   // Refs to access latest values in WebSocket handler without causing re-renders
   const requestAmountRef = useRef<string>('')
   const qrDataRef = useRef<string>('')
@@ -100,6 +108,172 @@ export default function PaymentPage() {
   useEffect(() => {
     isRequestModalOpenRef.current = isRequestModalOpen
   }, [isRequestModalOpen])
+
+  // Check for existing credentials (same logic as Header)
+  const checkForExistingCredentials = async (): Promise<boolean> => {
+    try {
+      if (typeof window === 'undefined') {
+        return false
+      }
+
+      // First check for persistent session in IndexedDB
+      if (window.indexedDB) {
+        const dbName = 'Web3PasskeyPersistentSessions'
+        const storeName = 'sessions'
+
+        const hasPersistentSession = await new Promise<boolean>(resolve => {
+          const request = indexedDB.open(dbName)
+
+          request.onerror = () => {
+            resolve(false)
+          }
+
+          request.onsuccess = event => {
+            const db = (event.target as IDBOpenDBRequest).result
+
+            if (!db.objectStoreNames.contains(storeName)) {
+              db.close()
+              resolve(false)
+              return
+            }
+
+            try {
+              const transaction = db.transaction([storeName], 'readonly')
+              const objectStore = transaction.objectStore(storeName)
+              const countRequest = objectStore.count()
+
+              countRequest.onsuccess = () => {
+                db.close()
+                resolve(countRequest.result > 0)
+              }
+
+              countRequest.onerror = () => {
+                db.close()
+                resolve(false)
+              }
+            } catch {
+              db.close()
+              resolve(false)
+            }
+          }
+        })
+
+        if (hasPersistentSession) {
+          return true
+        }
+      }
+
+      // Then check for w3pk_credential_index in localStorage
+      const credentialIndex = localStorage.getItem('w3pk_credential_index')
+      if (credentialIndex) {
+        return true
+      }
+
+      return false
+    } catch {
+      return false
+    }
+  }
+
+  // Username validation (same as Header)
+  const validateUsername = (input: string): boolean => {
+    if (!input.trim()) {
+      return true
+    }
+
+    const trimmedInput = input.trim()
+
+    // Check overall format and length (3-50 chars)
+    // Alphanumeric, underscore, and hyphen allowed
+    // Must start and end with alphanumeric
+    const formatValid =
+      /^[a-zA-Z0-9]([a-zA-Z0-9_-]*[a-zA-Z0-9])?$/.test(trimmedInput) &&
+      trimmedInput.length >= 3 &&
+      trimmedInput.length <= 50
+
+    return formatValid
+  }
+
+  // Handle login button click (same logic as Header)
+  const handleLogin = async () => {
+    // Check if credentials exist in localStorage or IndexedDB
+    const hasCredentials = await checkForExistingCredentials()
+
+    if (hasCredentials) {
+      // User has credentials - perform normal login
+      await login()
+    } else {
+      // No credentials - prompt for registration
+      setIsRegisterModalOpen(true)
+    }
+  }
+
+  // Handle registration
+  const handleRegister = async () => {
+    if (!username.trim()) {
+      toaster.create({
+        title: 'Username Required',
+        description: 'Please enter a username to register.',
+        type: 'warning',
+        duration: 3000,
+      })
+      setIsUsernameInvalid(true)
+      return
+    }
+
+    const isValid = validateUsername(username)
+    if (!isValid) {
+      setIsUsernameInvalid(true)
+      return
+    }
+
+    setIsUsernameInvalid(false)
+
+    try {
+      setIsRegistering(true)
+      console.log('[PaymentPage] Starting registration for:', username.trim())
+
+      // Add timeout to prevent infinite loading
+      const registrationPromise = register(username.trim())
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Registration timeout after 60 seconds')), 60000)
+      )
+
+      await Promise.race([registrationPromise, timeoutPromise])
+
+      console.log('[PaymentPage] Registration completed successfully')
+      setUsername('')
+      setIsRegisterModalOpen(false)
+    } catch (error: any) {
+      console.error('[PaymentPage] Registration failed:', error)
+
+      // Show user-friendly error message
+      toaster.create({
+        title: 'Registration Failed',
+        description: error.message || 'Unable to complete registration. Please try again.',
+        type: 'error',
+        duration: 8000,
+      })
+    } finally {
+      console.log('[PaymentPage] Cleaning up registration state')
+      setIsRegistering(false)
+    }
+  }
+
+  // Handle registration modal close
+  const handleRegisterModalClose = () => {
+    setUsername('')
+    setIsUsernameInvalid(false)
+    setIsRegisterModalOpen(false)
+  }
+
+  // Reset username validation when username changes
+  useEffect(() => {
+    const isValid = validateUsername(username)
+    if (isValid) {
+      setIsUsernameInvalid(false)
+    }
+  }, [username])
 
   // Check NFC support and set QR size after mount (client-side only)
   useEffect(() => {
@@ -939,7 +1113,7 @@ export default function PaymentPage() {
             <Button
               size="md"
               variant="outline"
-              onClick={login}
+              onClick={handleLogin}
               borderColor={brandColors.accent}
               color={brandColors.accent}
               _hover={{ bg: brandColors.accent, color: 'white', transform: 'scale(1.05)' }}
@@ -947,7 +1121,9 @@ export default function PaymentPage() {
               transition="all 0.2s"
             >
               {t.home.ctaButton}
-              <Box as="span" ml={2}>→</Box>
+              <Box as="span" ml={2}>
+                →
+              </Box>
             </Button>
           </VStack>
 
@@ -1076,23 +1252,94 @@ export default function PaymentPage() {
           {/* Bottom CTA */}
           <VStack gap={4} textAlign="center" py={{ base: 4, md: 8 }}>
             <Button
-              size="lg"
-              bg={brandColors.accent}
-              color="white"
-              _hover={{ bg: brandColors.accent, opacity: 0.9, transform: 'scale(1.05)' }}
-              onClick={login}
-              fontSize={{ base: 'lg', md: 'xl' }}
-              px={{ base: 10, md: 14 }}
-              py={{ base: 6, md: 8 }}
-              minW={{ base: '260px', md: '300px' }}
-              borderRadius="lg"
+              size="md"
+              variant="outline"
+              onClick={handleLogin}
+              borderColor={brandColors.accent}
+              color={brandColors.accent}
+              _hover={{ bg: brandColors.accent, color: 'white', transform: 'scale(1.05)' }}
               fontWeight="bold"
               transition="all 0.2s"
             >
               {t.home.ctaButton}
+              <Box as="span" ml={2}>
+                →
+              </Box>
             </Button>
           </VStack>
         </VStack>
+
+        {/* Registration Modal */}
+        <Dialog.Root
+          open={isRegisterModalOpen}
+          onOpenChange={(e: { open: boolean }) => (e.open ? null : handleRegisterModalClose())}
+        >
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content p={6}>
+                <Dialog.Header>
+                  <Dialog.Title>Register New Account</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body pt={4}>
+                  <VStack gap={4}>
+                    <Text fontSize="sm" color="gray.400">
+                      An Ethereum wallet will be created and securely stored on your device,
+                      protected by your biometric or PIN thanks to{' '}
+                      <ChakraLink
+                        href={
+                          'https://github.com/w3hc/w3pk/blob/main/src/auth/register.ts#L17-L102'
+                        }
+                        color={brandColors.accent}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        w3pk
+                      </ChakraLink>
+                      .
+                    </Text>
+                    <Field invalid={isUsernameInvalid} label="Username">
+                      <Input
+                        id="username-input"
+                        aria-describedby={
+                          isUsernameInvalid && username.trim() ? 'username-error' : undefined
+                        }
+                        aria-invalid={isUsernameInvalid && username.trim() ? true : undefined}
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                        placeholder="Enter your username"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && username.trim()) {
+                            handleRegister()
+                          }
+                        }}
+                      />
+                      {isUsernameInvalid && username.trim() && (
+                        <Field.ErrorText id="username-error">
+                          Username must be 3-50 characters long and contain only letters, numbers,
+                          underscores, and hyphens. It must start and end with a letter or number.
+                        </Field.ErrorText>
+                      )}
+                    </Field>
+                  </VStack>
+                </Dialog.Body>
+
+                <Dialog.Footer gap={3} pt={6}>
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </Dialog.ActionTrigger>
+                  <Button colorPalette="blue" onClick={handleRegister} disabled={!username.trim()}>
+                    {isRegistering && <Spinner size="50px" />}
+                    {!isRegistering && 'Create Account'}
+                  </Button>
+                </Dialog.Footer>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" />
+                </Dialog.CloseTrigger>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
       </Container>
     )
   }
