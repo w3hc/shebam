@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
 
     const endpoints = await w3pk.getEndpoints(chainId)
     if (!endpoints || endpoints.length === 0) {
-      return NextResponse.json({ error: `No RPC endpoints available for chain ID: ${chainId}` }, { status: 400 })
+      return NextResponse.json(
+        { error: `No RPC endpoints available for chain ID: ${chainId}` },
+        { status: 400 }
+      )
     }
 
     const rpcUrl = endpoints[0]

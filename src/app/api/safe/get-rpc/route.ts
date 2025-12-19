@@ -13,10 +13,7 @@ export async function POST(request: NextRequest) {
     const { chainId } = body
 
     if (!chainId) {
-      return NextResponse.json(
-        { error: 'Missing required field: chainId' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required field: chainId' }, { status: 400 })
     }
 
     const w3pk = createWeb3Passkey({

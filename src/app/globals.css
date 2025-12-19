@@ -55,7 +55,8 @@ html {
 
 /* Blinking animation for settling transactions */
 @keyframes blink {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

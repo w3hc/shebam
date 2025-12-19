@@ -68,7 +68,7 @@ export default function PaymentPage() {
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
   const onRequestModalOpen = () => setIsRequestModalOpen(true)
-  const onRequestModalClose = () => setIsRequestModalOpen(false)
+  const onRequestModalClose = useCallback(() => setIsRequestModalOpen(false), [])
   const [requestAmount, setRequestAmount] = useState<string>('')
   const [isQRGenerated, setIsQRGenerated] = useState<boolean>(false)
   const [qrData, setQrData] = useState<string>('')
@@ -632,7 +632,10 @@ export default function PaymentPage() {
           if (update.status === 'verified') {
             toaster.create({
               title: t.tx.sent,
-              description: t.tx.verifiedIn.replace('{duration}', update.duration?.toFixed(2) || '0'),
+              description: t.tx.verifiedIn.replace(
+                '{duration}',
+                update.duration?.toFixed(2) || '0'
+              ),
               type: 'success',
               duration: 4000,
               // containerStyle: {
@@ -739,10 +742,7 @@ export default function PaymentPage() {
         if (data.durations?.verified) {
           toaster.create({
             title: t.tx.sent,
-            description: t.tx.verifiedIn.replace(
-              '{duration}',
-              data.durations.verified.toFixed(2)
-            ),
+            description: t.tx.verifiedIn.replace('{duration}', data.durations.verified.toFixed(2)),
             type: 'success',
             duration: 4000,
           })
@@ -924,9 +924,7 @@ export default function PaymentPage() {
                 <Alert.Indicator />
                 <Box>
                   <Alert.Title>{t.tx.noSessionKey}</Alert.Title>
-                  <Alert.Description fontSize="sm">
-                    {t.tx.createSessionKeyOnSafe}
-                  </Alert.Description>
+                  <Alert.Description fontSize="sm">{t.tx.createSessionKeyOnSafe}</Alert.Description>
                 </Box>
               </Alert.Root>
             )}
@@ -1191,11 +1189,7 @@ export default function PaymentPage() {
                   </VStack>
                 ) : (
                   <VStack gap={3} width="full" pt={6}>
-                    <Button
-                      colorPalette="blue"
-                      onClick={handleRequestModalClose}
-                      width="full"
-                    >
+                    <Button colorPalette="blue" onClick={handleRequestModalClose} width="full">
                       {t.tx.close}
                     </Button>
                   </VStack>

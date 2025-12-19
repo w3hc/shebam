@@ -19,6 +19,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { FiShield, FiKey, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { brandColors } from '@/theme'
 import { setupSafeWithSessionKey, SessionKey } from '@/lib/safeActions'
 
@@ -122,7 +123,7 @@ export default function SafePage() {
     }
 
     verifyOwnership()
-  }, [safeAddress, safeOwner, isAuthenticated, deriveWallet, user, toaster])
+  }, [safeAddress, safeOwner, isAuthenticated, deriveWallet, user])
 
   // Load Safe balance
   const loadBalance = useCallback(async () => {
@@ -599,7 +600,7 @@ export default function SafePage() {
               _hover={{ bg: brandColors.accent, opacity: 0.8 }}
               size="lg"
             >
-              <a href="/">Go to Payment Page</a>
+              <Link href="/">Go to Payment Page</Link>
             </Button>
           </Box>
         )}
