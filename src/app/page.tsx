@@ -937,21 +937,17 @@ export default function PaymentPage() {
             </Box>
 
             <Button
-              size="lg"
-              bg={brandColors.accent}
-              color="white"
-              _hover={{ bg: brandColors.accent, opacity: 0.9, transform: 'scale(1.05)' }}
+              size="md"
+              variant="outline"
               onClick={login}
-              fontSize={{ base: 'xl', md: '2xl' }}
-              px={{ base: 12, md: 16 }}
-              py={{ base: 7, md: 9 }}
-              minW={{ base: '280px', md: '320px' }}
-              borderRadius="lg"
+              borderColor={brandColors.accent}
+              color={brandColors.accent}
+              _hover={{ bg: brandColors.accent, color: 'white', transform: 'scale(1.05)' }}
               fontWeight="bold"
               transition="all 0.2s"
-              boxShadow="0 10px 40px rgba(138, 43, 226, 0.3)"
             >
               {t.home.ctaButton}
+              <Box as="span" ml={2}>→</Box>
             </Button>
           </VStack>
 
