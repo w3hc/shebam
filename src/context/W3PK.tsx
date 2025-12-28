@@ -11,6 +11,11 @@ import React, {
 } from 'react'
 import { createWeb3Passkey } from 'w3pk'
 import { toaster } from '@/components/ui/toaster'
+import {
+  isWebAuthnAvailable,
+  isSecureContext,
+  isPlatformAuthenticatorAvailable,
+} from '@/utils/browserDetection'
 
 interface SecurityScore {
   total: number
@@ -170,7 +175,7 @@ interface W3pkProviderProps {
   children: ReactNode
 }
 
-const REGISTRATION_TIMEOUT_MS = 45000 // 45 seconds
+const REGISTRATION_TIMEOUT_MS = 60000 // 60 seconds - increased for slower devices/browsers
 
 /**
  * Check if any persistent session exists in IndexedDB
@@ -335,13 +340,38 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
       setIsLoading(true)
       console.log('[W3PK] Registration initiated for username:', username)
 
+      // Pre-flight WebAuthn capability checks
+      console.log('[W3PK] Checking WebAuthn capabilities...')
+
+      if (!isSecureContext()) {
+        throw new Error(
+          'WebAuthn requires a secure context (HTTPS or localhost). Please access this page via HTTPS.'
+        )
+      }
+
+      if (!isWebAuthnAvailable()) {
+        throw new Error(
+          'WebAuthn is not supported in this browser. Please use a modern browser like Chrome, Firefox, Safari, or Edge.'
+        )
+      }
+
+      // Check platform authenticator availability (non-blocking)
+      const hasPlatformAuth = await isPlatformAuthenticatorAvailable()
+      if (!hasPlatformAuth) {
+        console.warn(
+          '[W3PK] No platform authenticator detected. User may need to use a security key or enable biometrics.'
+        )
+      }
+
+      console.log('[W3PK] WebAuthn capabilities verified, proceeding with registration...')
+
       const registrationPromise = w3pk.register({ username })
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(
           () =>
             reject(
               new Error(
-                'Registration timed out. Please try again or check browser console for errors.'
+                'Registration timed out after 60 seconds. Please try again or check browser console for errors.'
               )
             ),
           REGISTRATION_TIMEOUT_MS
@@ -354,14 +384,57 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('[W3PK] Registration failed:', error)
 
-      const errorDetails =
-        error instanceof Error ? `${error.name}: ${error.message}` : JSON.stringify(error)
+      // Enhanced error diagnostics
+      let errorTitle = 'Registration Failed'
+      let errorDescription = ''
+
+      if (error instanceof Error) {
+        const errorName = error.name
+        const errorMessage = error.message
+
+        // Provide specific user-friendly error messages
+        if (errorName === 'NotAllowedError' || errorMessage.includes('not allowed')) {
+          errorTitle = 'Registration Not Allowed'
+          errorDescription =
+            'The browser denied permission to create a passkey. This could be because:\n' +
+            '• You cancelled the biometric prompt\n' +
+            '• Biometric authentication is disabled\n' +
+            '• Browser privacy settings are blocking WebAuthn\n\n' +
+            'Please try again and approve the biometric prompt.'
+        } else if (errorMessage.includes('timed out')) {
+          errorTitle = 'Registration Timed Out'
+          errorDescription =
+            'The registration process took too long. This could be because:\n' +
+            '• The biometric prompt was not responded to\n' +
+            '• Network or device performance issues\n\n' +
+            'Please try again.'
+        } else if (errorMessage.includes('secure context')) {
+          errorTitle = 'Insecure Connection'
+          errorDescription = errorMessage
+        } else if (errorMessage.includes('not supported')) {
+          errorTitle = 'Browser Not Supported'
+          errorDescription = errorMessage
+        } else if (errorName === 'InvalidStateError') {
+          errorTitle = 'Passkey Already Exists'
+          errorDescription =
+            'A passkey for this username already exists on this device. Please try logging in instead, or use a different username.'
+        } else if (errorName === 'NotSupportedError') {
+          errorTitle = 'Feature Not Supported'
+          errorDescription =
+            'Your browser or device does not support the required passkey features. Please try a different browser or device.'
+        } else {
+          // Generic error with full details
+          errorDescription = `${errorName}: ${errorMessage}`
+        }
+      } else {
+        errorDescription = JSON.stringify(error)
+      }
 
       toaster.create({
-        title: 'Registration Failed',
-        description: errorDetails,
+        title: errorTitle,
+        description: errorDescription,
         type: 'error',
-        duration: 15000, // Longer duration so you can read it on mobile
+        duration: 20000, // Longer duration for detailed error messages
       })
       throw error
     } finally {

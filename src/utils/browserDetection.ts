@@ -87,15 +87,16 @@ export function detectBrowser(): BrowserInfo {
       'Firefox Mobile has known issues with passkey persistence. Consider using Samsung Internet or Chrome instead.'
     warningLevel = 'warning'
   }
-  // Check for Chrome (including Chrome on Android)
-  else if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
-    browserName = 'Chrome'
+  // Check for Ecosia (Chromium-based browser)
+  else if (userAgent.includes('Ecosia')) {
+    browserName = 'Ecosia'
+    // Ecosia is Chromium-based, extract Chrome version
     const match = userAgent.match(/Chrome\/([\d.]+)/)
     if (match) {
       fullVersion = match[1]
       version = fullVersion.split('.')[0]
     }
-    // Chrome 67+ is supported (May 2018)
+    // Ecosia uses modern Chromium, should support WebAuthn
     const versionNum = parseInt(version)
     if (!isNaN(versionNum) && versionNum >= 67) {
       isSupported = true
@@ -103,7 +104,47 @@ export function detectBrowser(): BrowserInfo {
       warningLevel = 'none'
     } else {
       isSupported = false
-      recommendation = 'Please update Chrome to version 67 or higher.'
+      recommendation = 'Please update Ecosia to the latest version.'
+      warningLevel = 'error'
+    }
+  }
+  // Check for Brave (Chromium-based browser)
+  else if (userAgent.includes('Brave')) {
+    browserName = 'Brave'
+    const match = userAgent.match(/Chrome\/([\d.]+)/)
+    if (match) {
+      fullVersion = match[1]
+      version = fullVersion.split('.')[0]
+    }
+    // Brave uses modern Chromium
+    const versionNum = parseInt(version)
+    if (!isNaN(versionNum) && versionNum >= 67) {
+      isSupported = true
+      hasKnownIssues = false
+      warningLevel = 'none'
+    } else {
+      isSupported = false
+      recommendation = 'Please update Brave to the latest version.'
+      warningLevel = 'error'
+    }
+  }
+  // Check for Vivaldi (Chromium-based browser)
+  else if (userAgent.includes('Vivaldi')) {
+    browserName = 'Vivaldi'
+    const match = userAgent.match(/Chrome\/([\d.]+)/)
+    if (match) {
+      fullVersion = match[1]
+      version = fullVersion.split('.')[0]
+    }
+    // Vivaldi uses modern Chromium
+    const versionNum = parseInt(version)
+    if (!isNaN(versionNum) && versionNum >= 67) {
+      isSupported = true
+      hasKnownIssues = false
+      warningLevel = 'none'
+    } else {
+      isSupported = false
+      recommendation = 'Please update Vivaldi to the latest version.'
       warningLevel = 'error'
     }
   }
@@ -124,6 +165,27 @@ export function detectBrowser(): BrowserInfo {
     } else {
       isSupported = false
       recommendation = 'Please update Edge to version 18 or higher.'
+      warningLevel = 'error'
+    }
+  }
+  // Check for Chrome (including Chrome on Android)
+  // Must come after Chromium-based browsers (Ecosia, Brave, Vivaldi, Edge)
+  else if (userAgent.includes('Chrome')) {
+    browserName = 'Chrome'
+    const match = userAgent.match(/Chrome\/([\d.]+)/)
+    if (match) {
+      fullVersion = match[1]
+      version = fullVersion.split('.')[0]
+    }
+    // Chrome 67+ is supported (May 2018)
+    const versionNum = parseInt(version)
+    if (!isNaN(versionNum) && versionNum >= 67) {
+      isSupported = true
+      hasKnownIssues = false
+      warningLevel = 'none'
+    } else {
+      isSupported = false
+      recommendation = 'Please update Chrome to version 67 or higher.'
       warningLevel = 'error'
     }
   }
@@ -195,6 +257,17 @@ export function detectBrowser(): BrowserInfo {
       recommendation = 'Please update Opera to version 54 or higher.'
       warningLevel = 'error'
     }
+  }
+  // Unknown browser - check if WebAuthn is available instead of blocking
+  else {
+    browserName = 'Unknown'
+    // For unknown browsers, we'll rely on WebAuthn capability detection
+    // Default to supported if modern (assume WebAuthn exists)
+    isSupported = true
+    hasKnownIssues = true
+    recommendation =
+      'Unknown browser detected. If registration fails, please try Chrome, Firefox, Safari, or Edge.'
+    warningLevel = 'info'
   }
 
   return {
