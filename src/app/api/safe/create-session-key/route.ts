@@ -8,6 +8,7 @@ import {
 } from '@rhinestone/module-sdk'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS } from '@/lib/constants'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 const SMART_SESSIONS_MODULE = '0x00000000008bDABA73cD9815d79069c247Eb4bDA'
 const OWNABLE_VALIDATOR = '0x000000000013fdB5234E4E3162a810F54d9f7E98'
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const now = Math.floor(Date.now() / 1000)
     const expiresAt = now + 2548800
     const expiresAtDate = new Date(expiresAt * 1000)

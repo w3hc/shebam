@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchSafeTransactionHistory } from '@/lib/safeEventPoller'
 import { createWeb3Passkey } from 'w3pk'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 /**
  * GET /api/safe/transaction-history
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const startBlock = fromBlock ? parseInt(fromBlock, 10) : 18401088
 
     console.log(`📖 Fetching transaction history for Safe ${safeAddress}`)

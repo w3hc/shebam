@@ -3,6 +3,7 @@ import { ethers } from 'ethers'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/deploy-safe
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const provider = new ethers.JsonRpcProvider(rpcUrl)
     const relayerWallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY!, provider)
 

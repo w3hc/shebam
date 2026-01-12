@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ethers } from 'ethers'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 const SMART_SESSIONS_MODULE = '0x00000000008bDABA73cD9815d79069c247Eb4bDA'
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
 
     try {
       const protocolKit = await Safe.init({

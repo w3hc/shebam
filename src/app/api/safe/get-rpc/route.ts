@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createWeb3Passkey } from 'w3pk'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/get-rpc
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        rpcUrl: endpoints[0],
+        rpcUrl: getRandomEndpoint(endpoints),
       },
       { status: 200 }
     )

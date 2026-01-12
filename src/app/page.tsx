@@ -718,7 +718,7 @@ export default function PaymentPage() {
                 )
               })
               loadBalance()
-            }, 5000) // Wait 5 seconds for Blockscout to index
+            }, 8000) // Wait 8 seconds for Blockscout to index
           }
         }
       }
@@ -997,7 +997,7 @@ export default function PaymentPage() {
                 // Remove the transaction from pending once it's on blockchain
                 setPendingTransactions(prev => prev.filter(tx => tx.txId !== data.txId))
               })
-            }, 5000) // Wait 5 seconds for Blockscout to index
+            }, 8000) // Wait 8 seconds for Blockscout to index
 
             // Close WebSocket
             ws.close()
