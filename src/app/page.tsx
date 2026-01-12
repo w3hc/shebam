@@ -627,13 +627,25 @@ export default function PaymentPage() {
 
         // Auto-close payment request modal if it's open and amount matches
         // This triggers immediately when we receive ANY incoming transaction update
-        console.log('[Auto-close check] Modal open?', isRequestModalOpenRef.current, 'Requested amount:', requestAmountRef.current, 'QR data:', qrDataRef.current)
+        console.log(
+          '[Auto-close check] Modal open?',
+          isRequestModalOpenRef.current,
+          'Requested amount:',
+          requestAmountRef.current,
+          'QR data:',
+          qrDataRef.current
+        )
         if (isRequestModalOpenRef.current && requestAmountRef.current && qrDataRef.current) {
           try {
             const requestedAmountWei = ethers.parseEther(requestAmountRef.current).toString()
             const receivedAmountWei = update.amount || '0'
 
-            console.log('[Auto-close check] Requested amount (wei):', requestedAmountWei, 'Received amount (wei):', receivedAmountWei)
+            console.log(
+              '[Auto-close check] Requested amount (wei):',
+              requestedAmountWei,
+              'Received amount (wei):',
+              receivedAmountWei
+            )
 
             // Close modal if the received amount matches the requested amount
             if (requestedAmountWei === receivedAmountWei) {
@@ -646,7 +658,14 @@ export default function PaymentPage() {
             console.error('Error comparing amounts for modal auto-close:', error)
           }
         } else {
-          console.log('[Auto-close check] Condition not met - modal open:', isRequestModalOpenRef.current, 'amount:', requestAmountRef.current, 'qr:', !!qrDataRef.current)
+          console.log(
+            '[Auto-close check] Condition not met - modal open:',
+            isRequestModalOpenRef.current,
+            'amount:',
+            requestAmountRef.current,
+            'qr:',
+            !!qrDataRef.current
+          )
         }
 
         if (update.status === 'verified') {
