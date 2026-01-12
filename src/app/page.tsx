@@ -627,19 +627,26 @@ export default function PaymentPage() {
 
         // Auto-close payment request modal if it's open and amount matches
         // This triggers immediately when we receive ANY incoming transaction update
+        console.log('[Auto-close check] Modal open?', isRequestModalOpenRef.current, 'Requested amount:', requestAmountRef.current, 'QR data:', qrDataRef.current)
         if (isRequestModalOpenRef.current && requestAmountRef.current && qrDataRef.current) {
           try {
             const requestedAmountWei = ethers.parseEther(requestAmountRef.current).toString()
             const receivedAmountWei = update.amount || '0'
 
+            console.log('[Auto-close check] Requested amount (wei):', requestedAmountWei, 'Received amount (wei):', receivedAmountWei)
+
             // Close modal if the received amount matches the requested amount
             if (requestedAmountWei === receivedAmountWei) {
-              console.log('Auto-closing payment request modal - payment received!')
+              console.log('✅ Auto-closing payment request modal - payment received!')
               handleRequestModalClose()
+            } else {
+              console.log('❌ Amounts do not match - modal stays open')
             }
           } catch (error) {
             console.error('Error comparing amounts for modal auto-close:', error)
           }
+        } else {
+          console.log('[Auto-close check] Condition not met - modal open:', isRequestModalOpenRef.current, 'amount:', requestAmountRef.current, 'qr:', !!qrDataRef.current)
         }
 
         if (update.status === 'verified') {
@@ -801,9 +808,10 @@ export default function PaymentPage() {
       return
     }
 
-    const transferAmount = ethers.parseEther(amount)
+    const transferAmountBN = ethers.parseEther(amount)
+    const transferAmount = transferAmountBN.toString() // Store as string for API
     const balanceBN = ethers.getBigInt(safeBalance || '0')
-    if (transferAmount > balanceBN) {
+    if (transferAmountBN > balanceBN) {
       setInsufficientBalance(true)
 
       if (insufficientBalanceTimeoutRef.current) {
@@ -833,7 +841,6 @@ export default function PaymentPage() {
     try {
       // Encode ERC-20 transfer function call
       const erc20Interface = new ethers.Interface(ERC20_ABI)
-      const transferAmount = ethers.parseEther(amount).toString()
       const transferData = erc20Interface.encodeFunctionData('transfer', [
         recipient,
         transferAmount,
@@ -942,8 +949,7 @@ export default function PaymentPage() {
               window.history.replaceState({}, '', cleanUrl)
             }
 
-            // Optimistically reduce balance
-            const transferAmount = ethers.parseEther(amount).toString()
+            // Optimistically reduce balance (use transferAmount from outer scope)
             updateBalanceOptimistically(`-${transferAmount}`)
             setPaymentRequestDetected(false)
             setRecipient('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')
