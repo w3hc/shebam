@@ -118,7 +118,9 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        console.log(`📝 Session Keys Module must be enabled by user when creating first session key`)
+        console.log(
+          `📝 Session Keys Module must be enabled by user when creating first session key`
+        )
         console.log(`   Module address: 0x00000000008bDABA73cD9815d79069c247Eb4bDA`)
 
         return NextResponse.json({
