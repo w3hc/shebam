@@ -3,6 +3,7 @@ import { ethers } from 'ethers'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
+import { getShuffledEndpoints } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/deploy-safe
@@ -40,94 +41,115 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const relayerWallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY!, provider)
+    // Shuffle endpoints for retry logic
+    const shuffledEndpoints = getShuffledEndpoints(endpoints)
+    let lastError: any = null
 
-    const safeAccountConfig = {
-      owners: [userAddress],
-      threshold: 1,
-    }
+    // Try each endpoint until one works
+    for (let i = 0; i < shuffledEndpoints.length; i++) {
+      const rpcUrl = shuffledEndpoints[i]
+      console.log(`Attempting with RPC endpoint ${i + 1}/${shuffledEndpoints.length}: ${rpcUrl}`)
 
-    const protocolKit = await Safe.init({
-      provider: rpcUrl,
-      signer: process.env.RELAYER_PRIVATE_KEY,
-      predictedSafe: {
-        safeAccountConfig,
-      },
-    })
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl)
+        const relayerWallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY!, provider)
 
-    const safeAddress = await protocolKit.getAddress()
-    console.log(`Predicted Safe address: ${safeAddress}`)
+        const safeAccountConfig = {
+          owners: [userAddress],
+          threshold: 1,
+        }
 
-    const isSafeDeployed = await protocolKit.isSafeDeployed()
-    console.log(`Safe deployment status: ${isSafeDeployed ? 'Already deployed' : 'Not deployed'}`)
-
-    let txHash: string | undefined
-    let deploymentBlockNumber: number | undefined
-
-    if (!isSafeDeployed) {
-      console.log(`Deploying new Safe...`)
-      const deploymentTransaction = await protocolKit.createSafeDeploymentTransaction()
-
-      const txResponse = await relayerWallet.sendTransaction({
-        to: deploymentTransaction.to,
-        data: deploymentTransaction.data,
-        value: deploymentTransaction.value,
-      })
-
-      const receipt = await txResponse.wait()
-      txHash = receipt?.hash
-      deploymentBlockNumber = receipt?.blockNumber
-      console.log(`✅ Safe deployed at ${safeAddress} in block ${deploymentBlockNumber}`)
-
-      // console.log(`💰 Funding Safe with 0.05 xDAI...`)
-      // const fundingTx = await relayerWallet.sendTransaction({
-      //   to: safeAddress,
-      //   value: ethers.parseEther('0.05'),
-      // })
-
-      // await fundingTx.wait()
-      // console.log(`✅ Funded Safe with 0.05 xDAI`)
-
-      // Mint 42 EUR to the newly deployed Safe
-      console.log(`💶 Minting 42 EUR to Safe...`)
-      const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, relayerWallet)
-      const mintAmount = ethers.parseUnits('42', 18) // 42 EUR with 18 decimals
-      const mintTx = await euroContract.mint(safeAddress, mintAmount)
-      await mintTx.wait()
-      console.log(`✅ Minted 42 EUR to Safe`)
-    } else {
-      console.log(`✅ Safe already exists at ${safeAddress}`)
-
-      const balance = await provider.getBalance(safeAddress)
-      console.log(`Current balance: ${ethers.formatEther(balance)} xDAI`)
-
-      if (balance < ethers.parseEther('0.005')) {
-        console.log(`💰 Balance low, topping up with 0.05 xDAI...`)
-        const fundingTx = await relayerWallet.sendTransaction({
-          to: safeAddress,
-          value: ethers.parseEther('0.05'),
+        const protocolKit = await Safe.init({
+          provider: rpcUrl,
+          signer: process.env.RELAYER_PRIVATE_KEY,
+          predictedSafe: {
+            safeAccountConfig,
+          },
         })
-        await fundingTx.wait()
-        console.log(`✅ Topped up Safe with 0.05 xDAI`)
+
+        const safeAddress = await protocolKit.getAddress()
+        console.log(`✅ Successfully connected via ${rpcUrl}`)
+        console.log(`Predicted Safe address: ${safeAddress}`)
+
+        const isSafeDeployed = await protocolKit.isSafeDeployed()
+        console.log(
+          `Safe deployment status: ${isSafeDeployed ? 'Already deployed' : 'Not deployed'}`
+        )
+
+        let txHash: string | undefined
+        let deploymentBlockNumber: number | undefined
+
+        if (!isSafeDeployed) {
+          console.log(`Deploying new Safe...`)
+          const deploymentTransaction = await protocolKit.createSafeDeploymentTransaction()
+
+          const txResponse = await relayerWallet.sendTransaction({
+            to: deploymentTransaction.to,
+            data: deploymentTransaction.data,
+            value: deploymentTransaction.value,
+          })
+
+          const receipt = await txResponse.wait()
+          txHash = receipt?.hash
+          deploymentBlockNumber = receipt?.blockNumber
+          console.log(`✅ Safe deployed at ${safeAddress} in block ${deploymentBlockNumber}`)
+
+          // Mint 42 EUR to the newly deployed Safe
+          console.log(`💶 Minting 42 EUR to Safe...`)
+          const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, relayerWallet)
+          const mintAmount = ethers.parseUnits('42', 18) // 42 EUR with 18 decimals
+          const mintTx = await euroContract.mint(safeAddress, mintAmount)
+          await mintTx.wait()
+          console.log(`✅ Minted 42 EUR to Safe`)
+        } else {
+          console.log(`✅ Safe already exists at ${safeAddress}`)
+
+          const balance = await provider.getBalance(safeAddress)
+          console.log(`Current balance: ${ethers.formatEther(balance)} xDAI`)
+
+          if (balance < ethers.parseEther('0.005')) {
+            console.log(`💰 Balance low, topping up with 0.05 xDAI...`)
+            const fundingTx = await relayerWallet.sendTransaction({
+              to: safeAddress,
+              value: ethers.parseEther('0.05'),
+            })
+            await fundingTx.wait()
+            console.log(`✅ Topped up Safe with 0.05 xDAI`)
+          }
+        }
+
+        console.log(
+          `📝 Session Keys Module must be enabled by user when creating first session key`
+        )
+        console.log(`   Module address: 0x00000000008bDABA73cD9815d79069c247Eb4bDA`)
+
+        return NextResponse.json({
+          success: true,
+          safeAddress,
+          txHash,
+          deploymentBlockNumber,
+          alreadyDeployed: isSafeDeployed,
+          moduleAddress: '0x00000000008bDABA73cD9815d79069c247Eb4bDA',
+          message: isSafeDeployed
+            ? 'Safe already deployed and ready to use.'
+            : 'Safe deployed and funded successfully.',
+        })
+      } catch (error: any) {
+        lastError = error
+        console.error(`❌ Failed with endpoint ${rpcUrl}:`, error.message)
+
+        // If this is not the last endpoint, continue to the next one
+        if (i < shuffledEndpoints.length - 1) {
+          console.log(`Retrying with next endpoint...`)
+          continue
+        }
       }
     }
 
-    console.log(`📝 Session Keys Module must be enabled by user when creating first session key`)
-    console.log(`   Module address: 0x00000000008bDABA73cD9815d79069c247Eb4bDA`)
-
-    return NextResponse.json({
-      success: true,
-      safeAddress,
-      txHash,
-      deploymentBlockNumber,
-      alreadyDeployed: isSafeDeployed,
-      moduleAddress: '0x00000000008bDABA73cD9815d79069c247Eb4bDA',
-      message: isSafeDeployed
-        ? 'Safe already deployed and ready to use.'
-        : 'Safe deployed and funded successfully.',
-    })
+    // If we've exhausted all endpoints, throw the last error
+    throw new Error(
+      `All RPC endpoints failed. Last error: ${lastError?.message || 'Unknown error'}`
+    )
   } catch (error: any) {
     console.error('Error deploying Safe:', error)
     return NextResponse.json(

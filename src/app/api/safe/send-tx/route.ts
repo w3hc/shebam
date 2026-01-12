@@ -6,6 +6,7 @@ import { sendTransactionStatus } from '@/lib/websocket'
 import { randomBytes } from 'crypto'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 const SMART_SESSIONS_MODULE = '0x00000000008bDABA73cD9815d79069c247Eb4bDA'
 
@@ -87,7 +88,7 @@ async function processTransactionSync(params: TransactionParams) {
       }
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const provider = new ethers.JsonRpcProvider(rpcUrl)
 
     // Check EUR token balance instead of native balance
@@ -309,7 +310,7 @@ async function processTransaction(params: TransactionParams) {
       return
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const provider = new ethers.JsonRpcProvider(rpcUrl)
 
     // Check EUR token balance instead of native balance

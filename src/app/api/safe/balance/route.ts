@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ethers } from 'ethers'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/balance
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
     const provider = new ethers.JsonRpcProvider(rpcUrl)
 
     // Fetch EUR token balance instead of native balance

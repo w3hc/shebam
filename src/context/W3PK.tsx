@@ -396,11 +396,17 @@ export const W3pkProvider: React.FC<W3pkProviderProps> = ({ children }) => {
         if (errorName === 'NotAllowedError' || errorMessage.includes('not allowed')) {
           errorTitle = 'Registration Not Allowed'
           errorDescription =
-            'The browser denied permission to create a passkey. This could be because:\n' +
+            'The browser denied permission to create a passkey. This could be because:\n\n' +
             '• You cancelled the biometric prompt\n' +
-            '• Biometric authentication is disabled\n' +
-            '• Browser privacy settings are blocking WebAuthn\n\n' +
-            'Please try again and approve the biometric prompt.'
+            '• Biometric authentication is disabled on your device\n' +
+            '• Browser privacy/security settings are blocking WebAuthn\n' +
+            '• Ad blockers or extensions are interfering\n' +
+            '• Third-party cookies are blocked\n\n' +
+            'Try these fixes:\n' +
+            '1. Check browser settings for "Passkeys" or "WebAuthn"\n' +
+            '2. Disable strict privacy/tracking protection temporarily\n' +
+            '3. Try a different browser (Chrome, Safari, Firefox, Edge)\n' +
+            '4. Ensure biometric authentication is enabled on your device'
         } else if (errorMessage.includes('timed out')) {
           errorTitle = 'Registration Timed Out'
           errorDescription =

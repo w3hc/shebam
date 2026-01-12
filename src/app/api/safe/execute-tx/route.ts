@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
+import { getRandomEndpoint } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/execute-tx
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = endpoints[0]
+    const rpcUrl = getRandomEndpoint(endpoints)
 
     console.log(`   Initializing protocol kit...`)
 
