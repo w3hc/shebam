@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
-import { getRandomEndpoint } from '@/lib/rpcUtils'
+import { getShuffledEndpoints } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/execute-tx
@@ -53,16 +53,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = getRandomEndpoint(endpoints)
+    const shuffledEndpoints = getShuffledEndpoints(endpoints)
+    let protocolKit: Safe | null = null
+    let lastError: Error | null = null
 
     console.log(`   Initializing protocol kit...`)
 
-    // Initialize Safe with relayer (who will pay for gas)
-    const protocolKit = await Safe.init({
-      provider: rpcUrl,
-      signer: process.env.RELAYER_PRIVATE_KEY!,
-      safeAddress: safeAddress,
-    })
+    // Try each endpoint until one works
+    for (let i = 0; i < shuffledEndpoints.length; i++) {
+      const rpcUrl = shuffledEndpoints[i]
+
+      try {
+        // Initialize Safe with relayer (who will pay for gas)
+        protocolKit = await Safe.init({
+          provider: rpcUrl,
+          signer: process.env.RELAYER_PRIVATE_KEY!,
+          safeAddress: safeAddress,
+        })
+        break
+      } catch (error: any) {
+        lastError = error
+        console.warn(`⚠️  Endpoint ${i + 1}/${shuffledEndpoints.length} failed: ${rpcUrl}`)
+        console.warn(`   Error: ${error.message}`)
+
+        if (i < shuffledEndpoints.length - 1) {
+          continue
+        }
+      }
+    }
+
+    if (!protocolKit) {
+      throw lastError || new Error('All RPC endpoints failed')
+    }
 
     // Verify Safe ownership and threshold
     const owners = await protocolKit.getOwners()

@@ -6,7 +6,7 @@ import { sendTransactionStatus } from '@/lib/websocket'
 import { randomBytes } from 'crypto'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
-import { getRandomEndpoint } from '@/lib/rpcUtils'
+import { getShuffledEndpoints } from '@/lib/rpcUtils'
 
 const SMART_SESSIONS_MODULE = '0x00000000008bDABA73cD9815d79069c247Eb4bDA'
 
@@ -88,12 +88,33 @@ async function processTransactionSync(params: TransactionParams) {
       }
     }
 
-    const rpcUrl = getRandomEndpoint(endpoints)
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    const shuffledEndpoints = getShuffledEndpoints(endpoints)
+    let workingRpcUrl: string | null = null
+    let provider: ethers.JsonRpcProvider | null = null
+    let balance: bigint | null = null
 
-    // Check EUR token balance instead of native balance
-    const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
-    const balance = await euroContract.balanceOf(safeAddress)
+    // Find a working RPC endpoint by testing EUR token balance call
+    for (const rpcUrl of shuffledEndpoints) {
+      try {
+        provider = new ethers.JsonRpcProvider(rpcUrl)
+        const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
+        // Test with actual balance call
+        balance = await euroContract.balanceOf(safeAddress)
+        workingRpcUrl = rpcUrl
+        console.log(`✅ Working RPC found: ${rpcUrl}`)
+        break
+      } catch (error: any) {
+        console.warn(`⚠️  RPC endpoint failed: ${rpcUrl} - ${error.message}`)
+        continue
+      }
+    }
+
+    if (!workingRpcUrl || !provider || balance === null) {
+      return {
+        success: false,
+        error: 'All RPC endpoints failed to fetch EUR balance',
+      }
+    }
 
     if (balance < amountBigInt) {
       return {
@@ -127,7 +148,7 @@ async function processTransactionSync(params: TransactionParams) {
 
     // Use relayer to check module status (read-only operation)
     const protocolKit = await Safe.init({
-      provider: rpcUrl,
+      provider: workingRpcUrl,
       signer: process.env.RELAYER_PRIVATE_KEY!,
       safeAddress: safeAddress,
     })
@@ -310,12 +331,34 @@ async function processTransaction(params: TransactionParams) {
       return
     }
 
-    const rpcUrl = getRandomEndpoint(endpoints)
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    const shuffledEndpoints2 = getShuffledEndpoints(endpoints)
+    let rpcUrl: string | null = null
+    let provider: ethers.JsonRpcProvider | null = null
+    let balance: bigint | null = null
 
-    // Check EUR token balance instead of native balance
-    const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
-    const balance = await euroContract.balanceOf(safeAddress)
+    // Find a working RPC endpoint by testing EUR token balance call
+    for (const endpoint of shuffledEndpoints2) {
+      try {
+        provider = new ethers.JsonRpcProvider(endpoint)
+        const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
+        // Test with actual balance call
+        balance = await euroContract.balanceOf(safeAddress)
+        rpcUrl = endpoint
+        console.log(`✅ Working RPC found: ${rpcUrl}`)
+        break
+      } catch (error: any) {
+        console.warn(`⚠️  RPC endpoint failed: ${endpoint} - ${error.message}`)
+        continue
+      }
+    }
+
+    if (!rpcUrl || !provider || balance === null) {
+      sendTransactionStatus(txId, 'started', {
+        timestamp: Date.now(),
+        message: 'All RPC endpoints failed to fetch EUR balance',
+      })
+      return
+    }
 
     if (balance < amountBigInt) {
       sendTransactionStatus(txId, 'started', {
@@ -392,6 +435,7 @@ async function processTransaction(params: TransactionParams) {
       }
 
       // Verify EUR token balance one more time right before execution
+      const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
       const currentBalance = await euroContract.balanceOf(safeAddress)
       if (currentBalance < amountBigInt) {
         sendTransactionStatus(txId, 'started', {

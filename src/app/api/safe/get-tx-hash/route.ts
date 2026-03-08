@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Safe from '@safe-global/protocol-kit'
 import { createWeb3Passkey } from 'w3pk'
-import { getRandomEndpoint } from '@/lib/rpcUtils'
+import { getShuffledEndpoints } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/get-tx-hash
@@ -43,38 +43,58 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = getRandomEndpoint(endpoints)
+    const shuffledEndpoints = getShuffledEndpoints(endpoints)
+    let lastError: Error | null = null
 
-    // Initialize Safe with relayer (just to create the transaction)
-    const protocolKit = await Safe.init({
-      provider: rpcUrl,
-      signer: process.env.RELAYER_PRIVATE_KEY!,
-      safeAddress: safeAddress,
-    })
+    // Try each endpoint until one works
+    for (let i = 0; i < shuffledEndpoints.length; i++) {
+      const rpcUrl = shuffledEndpoints[i]
 
-    // Create the Safe transaction
-    const safeTransaction = await protocolKit.createTransaction({
-      transactions: [
-        {
-          to: to,
-          value: value || '0',
-          data: data,
-        },
-      ],
-    })
+      try {
+        // Initialize Safe with relayer (just to create the transaction)
+        const protocolKit = await Safe.init({
+          provider: rpcUrl,
+          signer: process.env.RELAYER_PRIVATE_KEY!,
+          safeAddress: safeAddress,
+        })
 
-    // Get the transaction hash that needs to be signed
-    const txHash = await protocolKit.getTransactionHash(safeTransaction)
+        // Create the Safe transaction
+        const safeTransaction = await protocolKit.createTransaction({
+          transactions: [
+            {
+              to: to,
+              value: value || '0',
+              data: data,
+            },
+          ],
+        })
 
-    console.log(`✅ Transaction hash generated: ${txHash}`)
+        // Get the transaction hash that needs to be signed
+        const txHash = await protocolKit.getTransactionHash(safeTransaction)
 
-    return NextResponse.json(
-      {
-        success: true,
-        txHash: txHash,
-      },
-      { status: 200 }
-    )
+        console.log(`✅ Transaction hash generated: ${txHash}`)
+
+        return NextResponse.json(
+          {
+            success: true,
+            txHash: txHash,
+          },
+          { status: 200 }
+        )
+      } catch (error: any) {
+        lastError = error
+        console.warn(`⚠️  Endpoint ${i + 1}/${shuffledEndpoints.length} failed: ${rpcUrl}`)
+        console.warn(`   Error: ${error.message}`)
+
+        // Continue to next endpoint
+        if (i < shuffledEndpoints.length - 1) {
+          continue
+        }
+      }
+    }
+
+    // All endpoints failed
+    throw lastError || new Error('All RPC endpoints failed')
   } catch (error: any) {
     console.error('Error generating transaction hash:', error)
     return NextResponse.json(

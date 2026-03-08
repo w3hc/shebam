@@ -147,9 +147,29 @@ export async function createSessionKey(
       }
     }
 
+    const sessionKey: SessionKey = {
+      sessionKeyAddress: sessionData.sessionKeyAddress,
+      sessionKeyIndex: sessionData.sessionKeyIndex,
+      expiresAt: sessionData.expiresAt,
+      permissions: sessionData.permissions,
+    }
+
+    // Save to localStorage if userId is provided
+    if (config.userId) {
+      const existingData = localStorage.getItem(`safe_${config.userId}`)
+      const existing = existingData ? JSON.parse(existingData) : {}
+      localStorage.setItem(
+        `safe_${config.userId}`,
+        JSON.stringify({
+          ...existing,
+          sessionKey,
+        })
+      )
+    }
+
     return {
       success: true,
-      sessionKey: sessionData,
+      sessionKey,
     }
   } catch (error: any) {
     return {
