@@ -93,6 +93,7 @@ export default function PaymentPage() {
   const [qrData, setQrData] = useState<string>('')
   const [isWebNFCSupported, setIsWebNFCSupported] = useState(false)
   const [qrSize, setQrSize] = useState(200)
+  const transactionHistoryRef = useRef<HTMLDivElement>(null)
 
   // Registration modal state
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
@@ -1009,6 +1010,19 @@ export default function PaymentPage() {
 
             // Start showing refetch loader
             setIsRefetchingAfterConfirmation(true)
+
+            // Scroll to Transaction History
+            setTimeout(() => {
+              if (transactionHistoryRef.current) {
+                const elementPosition = transactionHistoryRef.current.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - 20
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth'
+                })
+              }
+            }, 300)
           } else if (update.status === 'confirmed') {
             // Update the pending transaction to 'confirmed' status
             setPendingTransactions(prev =>
@@ -1601,32 +1615,34 @@ export default function PaymentPage() {
         </Box>
 
         {/* Transaction History */}
-        <TransactionHistory
-          transactions={(() => {
-            // Deduplicate: prefer blockchain transactions over pending ones with same txHash
-            const blockchainTxHashes = new Set(
-              transactions.filter(tx => tx.txHash).map(tx => tx.txHash)
-            )
-            const uniquePending = pendingTransactions.filter(
-              tx => !tx.txHash || !blockchainTxHashes.has(tx.txHash)
-            )
-            const combined = [...uniquePending, ...transactions]
-            console.log('📊 Transaction display:', {
-              pending: pendingTransactions.length,
-              blockchain: transactions.length,
-              uniquePending: uniquePending.length,
-              combined: combined.length,
-            })
-            return combined
-          })()}
-          isLoading={isLoadingTransactions}
-          isError={isTransactionError}
-          error={transactionError}
-          onRefresh={refetchTransactions}
-          safeAddress={safeAddress}
-          lastUpdated={transactionsLastUpdated}
-          isRefetchingAfterConfirmation={isRefetchingAfterConfirmation}
-        />
+        <Box ref={transactionHistoryRef}>
+          <TransactionHistory
+            transactions={(() => {
+              // Deduplicate: prefer blockchain transactions over pending ones with same txHash
+              const blockchainTxHashes = new Set(
+                transactions.filter(tx => tx.txHash).map(tx => tx.txHash)
+              )
+              const uniquePending = pendingTransactions.filter(
+                tx => !tx.txHash || !blockchainTxHashes.has(tx.txHash)
+              )
+              const combined = [...uniquePending, ...transactions]
+              console.log('📊 Transaction display:', {
+                pending: pendingTransactions.length,
+                blockchain: transactions.length,
+                uniquePending: uniquePending.length,
+                combined: combined.length,
+              })
+              return combined
+            })()}
+            isLoading={isLoadingTransactions}
+            isError={isTransactionError}
+            error={transactionError}
+            onRefresh={refetchTransactions}
+            safeAddress={safeAddress}
+            lastUpdated={transactionsLastUpdated}
+            isRefetchingAfterConfirmation={isRefetchingAfterConfirmation}
+          />
+        </Box>
 
         {/* Quick Link */}
         <Box textAlign="center">
