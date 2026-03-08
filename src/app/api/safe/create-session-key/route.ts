@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const rpcUrl = getRandomEndpoint(endpoints)
     const now = Math.floor(Date.now() / 1000)
-    const expiresAt = now + 2548800
+    const expiresAt = now + 31536000 // 365 days
     const expiresAtDate = new Date(expiresAt * 1000)
 
     const permissions = {
