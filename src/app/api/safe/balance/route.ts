@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
 
         const balance = (await Promise.race([balancePromise, timeoutPromise])) as bigint
 
-        console.log(`✅ EUR Balance: ${balance.toString()} (${ethers.formatUnits(balance, 18)} EUR)`)
+        console.log(
+          `✅ EUR Balance: ${balance.toString()} (${ethers.formatUnits(balance, 18)} EUR)`
+        )
 
         return NextResponse.json(
           {

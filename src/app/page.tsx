@@ -1019,7 +1019,7 @@ export default function PaymentPage() {
 
                 window.scrollTo({
                   top: offsetPosition,
-                  behavior: 'smooth'
+                  behavior: 'smooth',
                 })
               }
             }, 300)
