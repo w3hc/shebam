@@ -48,5 +48,6 @@
     "prettier": "^3.6.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "pnpm@10.23.0+sha1.b4a44ab0dc2adf2e36371d11d8eb0dc78ffc976c"
 }

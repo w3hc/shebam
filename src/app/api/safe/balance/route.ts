@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ethers } from 'ethers'
 import { createWeb3Passkey } from 'w3pk'
 import { EURO_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/constants'
-import { getRandomEndpoint } from '@/lib/rpcUtils'
+import { getShuffledEndpoints } from '@/lib/rpcUtils'
 
 /**
  * POST /api/safe/balance
@@ -40,21 +40,62 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rpcUrl = getRandomEndpoint(endpoints)
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    const shuffledEndpoints = getShuffledEndpoints(endpoints)
+    let lastError: Error | null = null
 
-    // Fetch EUR token balance instead of native balance
-    const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
-    const balance = await euroContract.balanceOf(safeAddress)
+    // Try each endpoint until one works
+    for (let i = 0; i < shuffledEndpoints.length; i++) {
+      const rpcUrl = shuffledEndpoints[i]
 
-    console.log(`✅ EUR Balance: ${balance.toString()} (${ethers.formatUnits(balance, 18)} EUR)`)
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl)
+        const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
+
+        // Add a timeout to the balance call
+        const balancePromise = euroContract.balanceOf(safeAddress)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('RPC timeout')), 5000)
+        )
+
+        const balance = (await Promise.race([balancePromise, timeoutPromise])) as bigint
+
+        console.log(
+          `✅ EUR Balance: ${balance.toString()} (${ethers.formatUnits(balance, 18)} EUR)`
+        )
+
+        return NextResponse.json(
+          {
+            success: true,
+            balance: balance.toString(),
+            safeAddress,
+            chainId,
+          },
+          { status: 200 }
+        )
+      } catch (error: any) {
+        lastError = error
+        console.warn(`⚠️  Endpoint ${i + 1}/${shuffledEndpoints.length} failed: ${rpcUrl}`)
+        console.warn(`   Error: ${error.message}`)
+
+        // Continue to next endpoint
+        if (i < shuffledEndpoints.length - 1) {
+          continue
+        }
+      }
+    }
+
+    // All endpoints failed
+    console.error(`❌ All RPC endpoints failed for balance check`)
+    console.error(`   Last error: ${lastError?.message}`)
+    console.log(`   Returning zero balance`)
 
     return NextResponse.json(
       {
         success: true,
-        balance: balance.toString(),
+        balance: '0',
         safeAddress,
         chainId,
+        warning: 'Could not fetch balance from any RPC endpoint',
       },
       { status: 200 }
     )

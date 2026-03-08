@@ -63,7 +63,16 @@ export default function PaymentPage() {
   const [userAddress, setUserAddress] = useState<string | null>(null)
   const [deploymentBlock, setDeploymentBlock] = useState<number | undefined>(undefined)
   const [isRefetchingAfterConfirmation, setIsRefetchingAfterConfirmation] = useState(false)
-  const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([])
+  const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>(() => {
+    // Load pending transactions from localStorage on mount
+    if (typeof window === 'undefined') return []
+    try {
+      const stored = localStorage.getItem('pendingTransactions')
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
   const [insufficientBalance, setInsufficientBalance] = useState(false)
   const insufficientBalanceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [recipient, setRecipient] = useState('0x502fb0dFf6A2adbF43468C9888D1A26943eAC6D1')
@@ -84,6 +93,7 @@ export default function PaymentPage() {
   const [qrData, setQrData] = useState<string>('')
   const [isWebNFCSupported, setIsWebNFCSupported] = useState(false)
   const [qrSize, setQrSize] = useState(200)
+  const transactionHistoryRef = useRef<HTMLDivElement>(null)
 
   // Registration modal state
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
@@ -503,6 +513,13 @@ export default function PaymentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user])
 
+  // Persist pending transactions to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pendingTransactions', JSON.stringify(pendingTransactions))
+    }
+  }, [pendingTransactions])
+
   useEffect(() => {
     return () => {
       if (insufficientBalanceTimeoutRef.current) {
@@ -738,10 +755,8 @@ export default function PaymentPage() {
               refetchTransactions().then(() => {
                 // Stop showing refetch loader after refetch completes
                 setIsRefetchingAfterConfirmation(false)
-                // Remove the pending incoming transaction once it's fetched from blockchain
-                setPendingTransactions(prev =>
-                  prev.filter(tx => !(tx.direction === 'incoming' && tx.status === 'confirmed'))
-                )
+                // Keep the pending transaction visible until blockchain data includes it
+                // (deduplication will happen in the component render)
               })
               loadBalance()
             }, 5000) // Wait 5 seconds for Blockscout to index
@@ -995,6 +1010,19 @@ export default function PaymentPage() {
 
             // Start showing refetch loader
             setIsRefetchingAfterConfirmation(true)
+
+            // Scroll to Transaction History
+            setTimeout(() => {
+              if (transactionHistoryRef.current) {
+                const elementPosition = transactionHistoryRef.current.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - 20
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                })
+              }
+            }, 300)
           } else if (update.status === 'confirmed') {
             // Update the pending transaction to 'confirmed' status
             setPendingTransactions(prev =>
@@ -1019,8 +1047,8 @@ export default function PaymentPage() {
               refetchTransactions().then(() => {
                 // Stop showing refetch loader after refetch completes
                 setIsRefetchingAfterConfirmation(false)
-                // Remove the transaction from pending once it's on blockchain
-                setPendingTransactions(prev => prev.filter(tx => tx.txId !== data.txId))
+                // Keep the pending transaction visible until blockchain data includes it
+                // (deduplication will happen in the component render)
               })
             }, 5000) // Wait 5 seconds for Blockscout to index
 
@@ -1587,16 +1615,34 @@ export default function PaymentPage() {
         </Box>
 
         {/* Transaction History */}
-        <TransactionHistory
-          transactions={[...pendingTransactions, ...transactions]}
-          isLoading={isLoadingTransactions}
-          isError={isTransactionError}
-          error={transactionError}
-          onRefresh={refetchTransactions}
-          safeAddress={safeAddress}
-          lastUpdated={transactionsLastUpdated}
-          isRefetchingAfterConfirmation={isRefetchingAfterConfirmation}
-        />
+        <Box ref={transactionHistoryRef}>
+          <TransactionHistory
+            transactions={(() => {
+              // Deduplicate: prefer blockchain transactions over pending ones with same txHash
+              const blockchainTxHashes = new Set(
+                transactions.filter(tx => tx.txHash).map(tx => tx.txHash)
+              )
+              const uniquePending = pendingTransactions.filter(
+                tx => !tx.txHash || !blockchainTxHashes.has(tx.txHash)
+              )
+              const combined = [...uniquePending, ...transactions]
+              console.log('📊 Transaction display:', {
+                pending: pendingTransactions.length,
+                blockchain: transactions.length,
+                uniquePending: uniquePending.length,
+                combined: combined.length,
+              })
+              return combined
+            })()}
+            isLoading={isLoadingTransactions}
+            isError={isTransactionError}
+            error={transactionError}
+            onRefresh={refetchTransactions}
+            safeAddress={safeAddress}
+            lastUpdated={transactionsLastUpdated}
+            isRefetchingAfterConfirmation={isRefetchingAfterConfirmation}
+          />
+        </Box>
 
         {/* Quick Link */}
         <Box textAlign="center">
