@@ -423,6 +423,20 @@ export default function PaymentPage() {
           onDeployed: deployResult => {
             setOnboardingStep('safe-deployed')
             setSafeAddress(deployResult.safeAddress)
+
+            // Ensure safeOwner is saved to localStorage
+            if (user) {
+              const existingData = localStorage.getItem(`safe_${user.id}`)
+              const existing = existingData ? JSON.parse(existingData) : {}
+              localStorage.setItem(
+                `safe_${user.id}`,
+                JSON.stringify({
+                  ...existing,
+                  safeAddress: deployResult.safeAddress,
+                  safeOwner: deployResult.safeOwner,
+                })
+              )
+            }
           },
           onEnablingModule: () => {
             setOnboardingStep('enabling-module')
