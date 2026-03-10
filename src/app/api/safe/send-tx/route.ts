@@ -532,14 +532,24 @@ async function processTransaction(params: TransactionParams) {
       })
     } catch (error: any) {
       console.error(`Error processing transaction ${txId}:`, error)
-      sendTransactionStatus(txId, 'started', {
+
+      // Determine if it's a relayer funding issue
+      let errorMessage = error.message
+      if (error.message?.includes('execution reverted') || error.message?.includes('insufficient funds')) {
+        errorMessage = 'Relayer out of funds. Please contact support or try again later.'
+      }
+
+      sendTransactionStatus(txId, 'error', {
         timestamp: Date.now(),
-        message: `Error: ${error.message}`,
+        message: errorMessage,
+        recipientAddress: to,
+        from: safeAddress,
+        amount,
       })
     }
   } catch (error: any) {
     console.error(`Fatal error processing transaction ${txId}:`, error)
-    sendTransactionStatus(txId, 'started', {
+    sendTransactionStatus(txId, 'error', {
       timestamp: Date.now(),
       message: `Fatal error: ${error.message}`,
     })
