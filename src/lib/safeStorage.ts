@@ -24,11 +24,12 @@ export interface Transaction {
   to: string
   amount: string // in wei
   timestamp: number
-  status: 'pending' | 'verified' | 'confirmed'
+  status: 'pending' | 'verified' | 'confirmed' | 'error'
   direction: 'incoming' | 'outgoing'
   duration?: number // time to confirm in seconds
   sessionKeyAddress?: string // if sent via session key
   isSelfTransfer?: boolean // true if Safe sent to itself
+  errorMessage?: string // error message if status is 'error'
 }
 
 export interface SafeData {

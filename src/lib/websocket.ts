@@ -1,7 +1,7 @@
 // Send status update to a specific transaction's WebSocket connection
 export function sendTransactionStatus(
   txId: string,
-  status: 'started' | 'verified' | 'confirmed',
+  status: 'started' | 'verified' | 'confirmed' | 'error',
   data: {
     timestamp: number
     duration?: number

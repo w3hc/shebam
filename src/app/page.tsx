@@ -423,6 +423,20 @@ export default function PaymentPage() {
           onDeployed: deployResult => {
             setOnboardingStep('safe-deployed')
             setSafeAddress(deployResult.safeAddress)
+
+            // Ensure safeOwner is saved to localStorage
+            if (user) {
+              const existingData = localStorage.getItem(`safe_${user.id}`)
+              const existing = existingData ? JSON.parse(existingData) : {}
+              localStorage.setItem(
+                `safe_${user.id}`,
+                JSON.stringify({
+                  ...existing,
+                  safeAddress: deployResult.safeAddress,
+                  safeOwner: deployResult.safeOwner,
+                })
+              )
+            }
           },
           onEnablingModule: () => {
             setOnboardingStep('enabling-module')
@@ -685,7 +699,13 @@ export default function PaymentPage() {
           )
         }
 
-        if (update.status === 'verified') {
+        if (update.status === 'error') {
+          // Handle error status for incoming transactions (self-sends)
+          if (isSelfSend) {
+            // This is an error from our own transaction, already handled by outgoing WebSocket
+            console.log('Error status for self-send, already handled by outgoing WebSocket')
+          }
+        } else if (update.status === 'verified') {
           // Skip adding to pending if it's a self-send (already added by outgoing WebSocket)
           if (!isSelfSend) {
             toaster.create({
@@ -967,7 +987,31 @@ export default function PaymentPage() {
           const update = JSON.parse(event.data)
           console.log('WebSocket update:', update)
 
-          if (update.status === 'verified') {
+          if (update.status === 'error') {
+            toaster.create({
+              title: t.tx.transactionFailed,
+              description: update.message || 'An error occurred during transaction processing',
+              type: 'error',
+              duration: 8000,
+            })
+
+            // Create a transaction history item with 'error' status
+            const errorTransaction: Transaction = {
+              txId: data.txId,
+              from: ethers.getAddress(safeAddress),
+              to: ethers.getAddress(recipient),
+              amount: transferAmount,
+              timestamp: Date.now(),
+              status: 'error',
+              direction: 'outgoing',
+              sessionKeyAddress: sessionKey.sessionKeyAddress,
+              errorMessage: update.message,
+            }
+
+            setPendingTransactions(prev => [errorTransaction, ...prev])
+            setIsSending(false)
+            ws.close()
+          } else if (update.status === 'verified') {
             toaster.create({
               title: t.tx.sent,
               description: t.tx.verifiedIn.replace(

@@ -56,6 +56,8 @@ export function TransactionHistory({
         return 'blue'
       case 'pending':
         return 'yellow'
+      case 'error':
+        return 'red'
       default:
         return 'gray'
     }
@@ -225,7 +227,11 @@ export function TransactionHistory({
                     </VStack>
                   </HStack>
                   <Badge colorPalette={getStatusColor(tx.status)} fontSize="xs">
-                    {tx.status === 'verified' ? 'PAID' : tx.status}
+                    {tx.status === 'verified'
+                      ? 'PAID'
+                      : tx.status === 'error'
+                        ? 'FAILED'
+                        : tx.status}
                   </Badge>
                 </HStack>
 
@@ -284,7 +290,11 @@ export function TransactionHistory({
                     <Text color="gray.400" fontSize="xs">
                       Tx Hash:
                     </Text>
-                    {tx.txHash ? (
+                    {tx.status === 'error' ? (
+                      <Text fontSize="xs" color="red.400">
+                        Failed
+                      </Text>
+                    ) : tx.txHash ? (
                       <HStack gap={1}>
                         <Text fontFamily="mono" fontSize="xs" color="blue.400">
                           {formatAddress(tx.txHash)}
@@ -311,6 +321,17 @@ export function TransactionHistory({
                       </Text>
                     )}
                   </HStack>
+
+                  {tx.errorMessage && (
+                    <HStack justify="space-between" align="start">
+                      <Text color="gray.400" fontSize="xs">
+                        Error:
+                      </Text>
+                      <Text fontSize="xs" color="red.400" textAlign="right" maxW="70%">
+                        {tx.errorMessage}
+                      </Text>
+                    </HStack>
+                  )}
                 </VStack>
               </Box>
             ))}
