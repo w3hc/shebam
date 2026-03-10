@@ -227,7 +227,11 @@ export function TransactionHistory({
                     </VStack>
                   </HStack>
                   <Badge colorPalette={getStatusColor(tx.status)} fontSize="xs">
-                    {tx.status === 'verified' ? 'PAID' : tx.status === 'error' ? 'FAILED' : tx.status}
+                    {tx.status === 'verified'
+                      ? 'PAID'
+                      : tx.status === 'error'
+                        ? 'FAILED'
+                        : tx.status}
                   </Badge>
                 </HStack>
 

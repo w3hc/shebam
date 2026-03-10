@@ -535,7 +535,10 @@ async function processTransaction(params: TransactionParams) {
 
       // Determine if it's a relayer funding issue
       let errorMessage = error.message
-      if (error.message?.includes('execution reverted') || error.message?.includes('insufficient funds')) {
+      if (
+        error.message?.includes('execution reverted') ||
+        error.message?.includes('insufficient funds')
+      ) {
         errorMessage = 'Relayer out of funds. Please contact support or try again later.'
       }
 
