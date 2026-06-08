@@ -15,5 +15,14 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "solidity.packageDefaultDependenciesContractsDirectory": "",
+  "solidity.packageDefaultDependenciesDirectory": "contract/lib",
+  "solidity.remappings": [
+    "@openzeppelin/contracts/=contract/lib/openzeppelin-contracts/contracts/",
+    "forge-std/=contract/lib/forge-std/src/",
+    "@openzeppelin/=contract/lib/openzeppelin-contracts/",
+    "ds-test/=contract/lib/forge-std/lib/ds-test/src/",
+    "erc4626-tests/=contract/lib/openzeppelin-contracts/lib/erc4626-tests/"
+  ]
 }
