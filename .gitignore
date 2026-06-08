@@ -43,3 +43,13 @@ NOTES.md
 
 # Activity logs (contains user data)
 logs.md
+
+# Foundry - ignore everything in contract/ except source files
+/contract/*
+!/contract/src/
+!/contract/script/
+!/contract/test/
+!/contract/foundry.toml
+!/contract/remappings.txt
+!/contract/README.md
+!/contract/.gitignore

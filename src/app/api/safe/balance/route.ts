@@ -49,12 +49,19 @@ export async function POST(request: NextRequest) {
 
       try {
         const provider = new ethers.JsonRpcProvider(rpcUrl)
+
+        // First check if the contract exists by checking code at address
+        const code = await provider.getCode(EURO_TOKEN_ADDRESS)
+        if (code === '0x') {
+          throw new Error(`EUR token contract not found at ${EURO_TOKEN_ADDRESS}`)
+        }
+
         const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, provider)
 
         // Add a timeout to the balance call
         const balancePromise = euroContract.balanceOf(safeAddress)
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('RPC timeout')), 5000)
+          setTimeout(() => reject(new Error('RPC timeout')), 10000)
         )
 
         const balance = (await Promise.race([balancePromise, timeoutPromise])) as bigint
