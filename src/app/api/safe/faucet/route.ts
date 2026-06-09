@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Get current nonce and gas price to avoid replacement issues
     const [latestNonce, pendingNonce] = await Promise.all([
       provider.getTransactionCount(relayerWallet.address, 'latest'),
-      provider.getTransactionCount(relayerWallet.address, 'pending')
+      provider.getTransactionCount(relayerWallet.address, 'pending'),
     ])
 
     // If there are pending transactions, wait a bit and retry
@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Please wait',
-          details: 'A previous mint transaction is still being processed. Please try again in a few seconds.',
+          details:
+            'A previous mint transaction is still being processed. Please try again in a few seconds.',
         },
         { status: 429 } // Too Many Requests
       )
@@ -73,8 +74,10 @@ export async function POST(request: NextRequest) {
 
     const mintTx = await euroContract.mint(safeAddress, mintAmount, {
       nonce: pendingNonce,
-      maxFeePerGas: feeData.maxFeePerGas ? feeData.maxFeePerGas * 120n / 100n : undefined,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ? feeData.maxPriorityFeePerGas * 120n / 100n : undefined,
+      maxFeePerGas: feeData.maxFeePerGas ? (feeData.maxFeePerGas * 120n) / 100n : undefined,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
+        ? (feeData.maxPriorityFeePerGas * 120n) / 100n
+        : undefined,
     })
 
     console.log(`📤 Transaction sent: ${mintTx.hash}`)

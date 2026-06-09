@@ -279,7 +279,9 @@ export default function SafePage() {
       } else if (response.status === 429) {
         toaster.create({
           title: 'Please Wait',
-          description: data.details || 'A previous transaction is still processing. Try again in a few seconds.',
+          description:
+            data.details ||
+            'A previous transaction is still processing. Try again in a few seconds.',
           type: 'warning',
           duration: 5000,
         })
