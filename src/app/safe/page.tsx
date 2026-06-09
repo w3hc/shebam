@@ -276,6 +276,15 @@ export default function SafePage() {
           duration: 5000,
         })
         await loadBalance()
+      } else if (response.status === 429) {
+        toaster.create({
+          title: 'Please Wait',
+          description:
+            data.details ||
+            'A previous transaction is still processing. Try again in a few seconds.',
+          type: 'warning',
+          duration: 5000,
+        })
       } else {
         throw new Error(data.error || 'Failed to mint EUR')
       }

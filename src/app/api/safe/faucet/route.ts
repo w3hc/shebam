@@ -10,6 +10,9 @@ import { getRandomEndpoint } from '@/lib/rpcUtils'
  * Body: { safeAddress: string, chainId: number }
  */
 
+// Increase timeout for blockchain transaction confirmation
+export const maxDuration = 300 // 5 minutes
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -48,18 +51,46 @@ export async function POST(request: NextRequest) {
     const euroContract = new ethers.Contract(EURO_TOKEN_ADDRESS, ERC20_ABI, relayerWallet)
     const mintAmount = ethers.parseUnits('10000', 18) // 10,000 EUR with 18 decimals
 
-    const mintTx = await euroContract.mint(safeAddress, mintAmount)
-    const receipt = await mintTx.wait()
+    // Get current nonce and gas price to avoid replacement issues
+    const [latestNonce, pendingNonce] = await Promise.all([
+      provider.getTransactionCount(relayerWallet.address, 'latest'),
+      provider.getTransactionCount(relayerWallet.address, 'pending'),
+    ])
 
-    console.log(`✅ Minted 10,000 EUR to ${safeAddress}`)
-    console.log(`   Transaction hash: ${receipt.hash}`)
+    // If there are pending transactions, wait a bit and retry
+    if (pendingNonce > latestNonce) {
+      console.log(`⏳ Waiting for ${pendingNonce - latestNonce} pending transaction(s) to clear...`)
+      return NextResponse.json(
+        {
+          error: 'Please wait',
+          details:
+            'A previous mint transaction is still being processed. Please try again in a few seconds.',
+        },
+        { status: 429 } // Too Many Requests
+      )
+    }
 
+    const feeData = await provider.getFeeData()
+
+    const mintTx = await euroContract.mint(safeAddress, mintAmount, {
+      nonce: pendingNonce,
+      maxFeePerGas: feeData.maxFeePerGas ? (feeData.maxFeePerGas * 120n) / 100n : undefined,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
+        ? (feeData.maxPriorityFeePerGas * 120n) / 100n
+        : undefined,
+    })
+
+    console.log(`📤 Transaction sent: ${mintTx.hash}`)
+    console.log(`✅ Mint transaction submitted successfully`)
+
+    // Don't wait for confirmation - return immediately
+    // The transaction will be mined in the background
     return NextResponse.json({
       success: true,
       safeAddress,
       amount: '10000',
-      txHash: receipt.hash,
-      message: 'Successfully minted 10,000 EUR to Safe',
+      txHash: mintTx.hash,
+      message: 'Mint transaction submitted - it will be confirmed shortly',
     })
   } catch (error: any) {
     console.error('Error minting EUR tokens:', error)
