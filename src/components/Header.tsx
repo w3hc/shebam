@@ -276,6 +276,11 @@ export default function Header() {
                           {t.navigation.settings}
                         </MenuItem>
                       </Link>
+                      <Link href="/tos" color="white">
+                        <MenuItem value="about" fontSize="md" px={4} py={3}>
+                          Terms of service
+                        </MenuItem>
+                      </Link>
                     </MenuContent>
                   </MenuPositioner>
                 </Portal>

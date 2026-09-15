@@ -1,6 +1,6 @@
 {
   "name": "shebam",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Web3 payment app",
   "templateVersion": "3.1.1",
   "main": "index.js",
