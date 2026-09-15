@@ -16,7 +16,9 @@ const ClientOnly = ({
   fallback?: React.ReactNode
 }) => {
   const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
   return mounted ? children : fallback || null
 }
 

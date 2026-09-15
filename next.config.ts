@@ -1,5 +1,55 @@
 import type { NextConfig } from 'next'
 
+// Content-Security-Policy, defense-in-depth for the deployment.
+// 'unsafe-inline' in script-src is required by Next.js inline bootstrap
+// scripts (pages are statically prerendered, so per-request nonces are not
+// available); 'wasm-unsafe-eval' and blob: workers are required by the
+// zero-knowledge tooling bundled with w3pk (snarkjs/circomlibjs).
+// connect-src is limited to the origins the app can actually contact:
+// same-origin (including the /api routes and the same-origin tx-status
+// WebSocket), the public Optimism RPC used by the opt-in build
+// verification, the endpoints referenced by the w3pk library, and
+// unpkg.com, which w3pk's own getCurrentBuildHash()/verifyBuildHash() fetch
+// directly (https://unpkg.com/w3pk@<version>/dist) to check the published
+// package — not documented anywhere, found by testing the feature. The
+// chain RPCs this app talks to for Safe transactions all go through our
+// own /api/safe/* routes server-side, so they never need a browser-facing
+// connect-src entry.
+// 'unsafe-eval' is added in development only: React's development build
+// uses eval() for debugging features (it never does in production).
+const isDev = process.env.NODE_ENV === 'development'
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self' https://mainnet.optimism.io https://chainid.network https://rukh.w3hc.org https://unpkg.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ')
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    // nfc=* kept for this app's NFC tap-to-pay flow (src/app/nfc)
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), nfc=*',
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+]
+
 const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['@chakra-ui/react'],
@@ -7,13 +57,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Permissions-Policy',
-            value: 'nfc=*',
-          },
-        ],
+        source: '/(.*)',
+        headers: securityHeaders,
       },
     ]
   },

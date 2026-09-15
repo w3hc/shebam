@@ -39,7 +39,11 @@ next-env.d.ts
 # Misc
 NOTES.md
 /zhankai
-/docs
+/docs/notes
+.docs
+MAILING_LIST.txt
+.claude/
+docs/notes
 
 # Activity logs (contains user data)
 logs.md
