@@ -27,14 +27,14 @@ This is the single organising principle of the project. Every product decision i
 
 ## 3. The applicable framework
 
-| Instrument | Subject matter | Applicability to Shebam today |
-| --- | --- | --- |
-| [MiCA — Regulation (EU) 2023/1114](https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng) | Authorisation of crypto-asset service providers; issuance of e-money tokens | Not applicable — no regulated service is performed |
-| [TFR — Regulation (EU) 2023/1113](https://eur-lex.europa.eu/eli/reg/2023/1113/oj/eng) | Information accompanying transfers of funds and crypto-assets ("travel rule") | Addressed to CASPs; not applicable to self-hosted wallet software |
-| [AMLR — Regulation (EU) 2024/1624](https://eur-lex.europa.eu/eli/reg/2024/1624/oj/eng) | Anti-money-laundering single rulebook, applying from 10 July 2027, including restrictions on anonymity-enhancing features | Addressed to obliged entities; Shebam is not one, but the perimeter must be re-examined before that date |
-| [DAC8 — Council Directive (EU) 2023/2226](https://taxation-customs.ec.europa.eu/taxation/tax-transparency-cooperation/administrative-co-operation-and-mutual-assistance/directive-administrative-cooperation-dac/dac8_en) | Automatic exchange of tax information on crypto-asset transactions, transposed from 1 January 2026 | Addressed to reporting crypto-asset service providers; not applicable |
-| [Code monétaire et financier](https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006072026/), Book V | French implementation and criminal penalties for unauthorised provision of regulated services | Relevant as the sanction regime; see [section 7](#7-sanctions-exposure) |
-| [Directive (EU) 2015/849](https://eur-lex.europa.eu/eli/dir/2015/849/oj/eng) and [Article L561-12 CMF](https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041577784) | Five-year record retention on originator and beneficiary | Addressed to obliged entities; not applicable |
+| Instrument                                                                                                                                                                                                                | Subject matter                                                                                                            | Applicability to Shebam today                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [MiCA — Regulation (EU) 2023/1114](https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng)                                                                                                                                    | Authorisation of crypto-asset service providers; issuance of e-money tokens                                               | Not applicable — no regulated service is performed                                                       |
+| [TFR — Regulation (EU) 2023/1113](https://eur-lex.europa.eu/eli/reg/2023/1113/oj/eng)                                                                                                                                     | Information accompanying transfers of funds and crypto-assets ("travel rule")                                             | Addressed to CASPs; not applicable to self-hosted wallet software                                        |
+| [AMLR — Regulation (EU) 2024/1624](https://eur-lex.europa.eu/eli/reg/2024/1624/oj/eng)                                                                                                                                    | Anti-money-laundering single rulebook, applying from 10 July 2027, including restrictions on anonymity-enhancing features | Addressed to obliged entities; Shebam is not one, but the perimeter must be re-examined before that date |
+| [DAC8 — Council Directive (EU) 2023/2226](https://taxation-customs.ec.europa.eu/taxation/tax-transparency-cooperation/administrative-co-operation-and-mutual-assistance/directive-administrative-cooperation-dac/dac8_en) | Automatic exchange of tax information on crypto-asset transactions, transposed from 1 January 2026                        | Addressed to reporting crypto-asset service providers; not applicable                                    |
+| [Code monétaire et financier](https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006072026/), Book V                                                                                                                | French implementation and criminal penalties for unauthorised provision of regulated services                             | Relevant as the sanction regime; see [section 7](#7-sanctions-exposure)                                  |
+| [Directive (EU) 2015/849](https://eur-lex.europa.eu/eli/dir/2015/849/oj/eng) and [Article L561-12 CMF](https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041577784)                                              | Five-year record retention on originator and beneficiary                                                                  | Addressed to obliged entities; not applicable                                                            |
 
 The competent authorities for the French perimeter are the [Autorité des marchés financiers](https://www.amf-france.org/en) (AMF) and the [Autorité de contrôle prudentiel et de résolution](https://acpr.banque-france.fr/) (ACPR), with [ESMA](https://www.esma.europa.eu/) at Union level and [Tracfin](https://www.economie.gouv.fr/tracfin) as the financial intelligence unit.
 
@@ -66,7 +66,7 @@ Integrating Monerium's own flows is acceptable only where the contractual and te
 
 Shebam does not bring together buying and selling interests, does not put a buyer in contact with a seller, does not maintain an order book, and does not cause transactions between users to come into existence. It transfers what the user already owns to a destination the user alone designates.
 
-A merchant *receiving* EURe in payment is an ordinary transfer and does not affect this analysis.
+A merchant _receiving_ EURe in payment is an ordinary transfer and does not affect this analysis.
 
 ### Consequence for privacy
 
@@ -93,7 +93,7 @@ The wallet exemption is cleaner for plain transfers than for privacy features. T
 - Shebam remains a **signing interface** to infrastructure operated by others — the protocol deployment, the association-set provider, the relayers;
 - Shebam does **not** operate an association-set provider, does **not** operate relayers, does **not** take a fee on private transfers, and does **not** custody anything.
 
-Each of those four acts moves Shebam from *user of a privacy protocol* towards *operator of a privacy service*, which is a materially weaker position.
+Each of those four acts moves Shebam from _user of a privacy protocol_ towards _operator of a privacy service_, which is a materially weaker position.
 
 A further constraint is specific to the asset: EURe is a regulated **e-money token** under MiCA, and the issuer retains administrative controls over the contract. Monerium's compliance position must be obtained before any EURe is routed through a shielded pool.
 
@@ -115,13 +115,13 @@ For as long as the answer remains "a tool for transfer", Shebam is within the sa
 
 ## 9. Summary
 
-|  | Wallet phase | Matching phase |
-| --- | --- | --- |
-| **What Shebam does** | Provides a tool to transfer the user's own EURe | Brings buyers and sellers together |
-| **Status** | Unregulated, as MetaMask | Regulated service under MiCA |
-| **Authorised partner** | Not required | Indispensable, and must bear the regulated act |
-| **Transaction retention** | No obligation | Mandatory, five years |
-| **Strong privacy** | Lawful | Impossible |
+|                           | Wallet phase                                    | Matching phase                                 |
+| ------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| **What Shebam does**      | Provides a tool to transfer the user's own EURe | Brings buyers and sellers together             |
+| **Status**                | Unregulated, as MetaMask                        | Regulated service under MiCA                   |
+| **Authorised partner**    | Not required                                    | Indispensable, and must bear the regulated act |
+| **Transaction retention** | No obligation                                   | Mandatory, five years                          |
+| **Strong privacy**        | Lawful                                          | Impossible                                     |
 
 ## 10. Review
 

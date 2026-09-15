@@ -21,14 +21,14 @@ This document describes the engineering work, its dependencies and its constrain
 
 ### 2.1 Application layer
 
-| Concern | Technology |
-| --- | --- |
-| Framework | [Next.js](https://nextjs.org/) 16 (App Router) on a custom [Node.js](https://nodejs.org/) server |
-| UI | [React](https://react.dev/) 19, [Chakra UI](https://chakra-ui.com/) 3, [Framer Motion](https://motion.dev/) |
-| Language | [TypeScript](https://www.typescriptlang.org/) 6, strict |
-| Package manager | [pnpm](https://pnpm.io/) |
-| Quality gates | [ESLint](https://eslint.org/) with [`eslint-plugin-jsx-a11y`](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y), [Prettier](https://prettier.io/) |
-| Hosting | Ubuntu VPS at [Infomaniak](https://www.infomaniak.com/) |
+| Concern         | Technology                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | [Next.js](https://nextjs.org/) 16 (App Router) on a custom [Node.js](https://nodejs.org/) server                                                      |
+| UI              | [React](https://react.dev/) 19, [Chakra UI](https://chakra-ui.com/) 3, [Framer Motion](https://motion.dev/)                                           |
+| Language        | [TypeScript](https://www.typescriptlang.org/) 6, strict                                                                                               |
+| Package manager | [pnpm](https://pnpm.io/)                                                                                                                              |
+| Quality gates   | [ESLint](https://eslint.org/) with [`eslint-plugin-jsx-a11y`](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y), [Prettier](https://prettier.io/) |
+| Hosting         | Ubuntu VPS at [Infomaniak](https://www.infomaniak.com/)                                                                                               |
 
 ### 2.2 Wallet and account layer
 
@@ -91,7 +91,7 @@ Moving to production does **not** change the legal nature of the application; it
 
 ### W4 — Payment links
 
-A link that *carries* value: the recipient can claim a payment without having signed up, without holding an address, and without prior knowledge of Shebam.
+A link that _carries_ value: the recipient can claim a payment without having signed up, without holding an address, and without prior knowledge of Shebam.
 
 - Ephemeral claim key embedded in the link fragment, never transmitted to the server.
 - Claim flow that provisions a passkey wallet on first use, so the claim itself is the onboarding.
@@ -102,15 +102,15 @@ A link that *carries* value: the recipient can claim a payment without having si
 
 Confidentiality with respect to the public, not with respect to authorities. Lawful for as long as the conditions in [LEGAL.md §5](LEGAL.md#5-the-three-invariants) hold.
 
-Target: [Privacy Pools](https://docs.privacypools.com/) by [0xbow](https://www.0xbow.io/), whose **V2** design supports **shielded in-pool transfers** — peer-to-peer payments without a withdrawal step — which is precisely the flow a payment application needs. V1, which is already live on Gnosis, offers private *withdrawals* only and is a poor fit.
+Target: [Privacy Pools](https://docs.privacypools.com/) by [0xbow](https://www.0xbow.io/), whose **V2** design supports **shielded in-pool transfers** — peer-to-peer payments without a withdrawal step — which is precisely the flow a payment application needs. V1, which is already live on Gnosis, offers private _withdrawals_ only and is a poor fit.
 
 State of play:
 
-| Item | Status |
-| --- | --- |
-| Privacy Pools on Gnosis | V1 live; V2 mainnet availability to be confirmed with 0xbow |
-| ERC-20 support | Built into the protocol; pools are asset-specific |
-| EURe pool | Does not exist — supported assets are native tokens plus USDT, USDC, DAI |
+| Item                    | Status                                                                   |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Privacy Pools on Gnosis | V1 live; V2 mainnet availability to be confirmed with 0xbow              |
+| ERC-20 support          | Built into the protocol; pools are asset-specific                        |
+| EURe pool               | Does not exist — supported assets are native tokens plus USDT, USDC, DAI |
 
 Two paths:
 
