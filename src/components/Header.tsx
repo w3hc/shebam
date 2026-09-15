@@ -81,11 +81,23 @@ export default function Header() {
      * 3. Otherwise login() prompts for the passkey; if it turns out to be
      *    unavailable after all, fall back to the registration modal
      */
+    let hasCredentials: boolean
     try {
-      if (!(await hasLocalCredentials())) {
-        onOpen()
-        return
-      }
+      hasCredentials = await hasLocalCredentials()
+    } catch (error) {
+      // hasLocalCredentials() isn't expected to throw, but if it ever does,
+      // fail safe into the registration flow rather than doing nothing
+      console.error('[Header] hasLocalCredentials check failed:', error)
+      onOpen()
+      return
+    }
+
+    if (!hasCredentials) {
+      onOpen()
+      return
+    }
+
+    try {
       await login()
     } catch (error) {
       if (isNoPasskeyError(error)) {

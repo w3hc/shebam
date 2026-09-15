@@ -123,24 +123,12 @@ const SettingsPage = () => {
   })
 
   // Handler for session duration change
-  const handleSessionDurationChange = async (details: { value: number[] }) => {
+  const handleSessionDurationChange = (details: { value: number[] }) => {
     const days = details.value[0]
     setPersistentSessionDays(days)
-    localStorage.setItem('persistentSessionDuration', days.toString())
-
-    // Wait 3 seconds then logout and login to apply the new duration
-    setTimeout(async () => {
-      logout()
-      // Wait a bit for logout to complete, then trigger login
-      setTimeout(async () => {
-        try {
-          await login()
-        } catch (error) {
-          // User cancelled login, that's okay
-          console.log('Login cancelled by user')
-        }
-      }, 500)
-    }, 3000)
+    // Updates the live SDK instance directly, so it applies at the next
+    // real login without forcing a logout/login round-trip
+    setPersistentSessionDuration(days)
   }
 
   // Social Recovery state
@@ -183,7 +171,6 @@ const SettingsPage = () => {
     createBackup,
     restoreFromBackup,
     registerWithBackupFile,
-    login,
     logout,
     register,
     deriveWallet,
@@ -192,6 +179,7 @@ const SettingsPage = () => {
     generateGuardianInvite,
     recoverFromGuardians,
     clearSocialRecoveryConfig,
+    setPersistentSessionDuration,
   } = useW3PK()
 
   const validateUsername = (input: string): boolean => {
