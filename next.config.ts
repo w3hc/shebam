@@ -8,7 +8,10 @@ import type { NextConfig } from 'next'
 // connect-src is limited to the origins the app can actually contact:
 // same-origin (including the /api routes and the same-origin tx-status
 // WebSocket), the public Optimism RPC used by the opt-in build
-// verification, and the endpoints referenced by the w3pk library. The
+// verification, the endpoints referenced by the w3pk library, and
+// unpkg.com, which w3pk's own getCurrentBuildHash()/verifyBuildHash() fetch
+// directly (https://unpkg.com/w3pk@<version>/dist) to check the published
+// package — not documented anywhere, found by testing the feature. The
 // chain RPCs this app talks to for Safe transactions all go through our
 // own /api/safe/* routes server-side, so they never need a browser-facing
 // connect-src entry.
@@ -22,7 +25,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'self' https://mainnet.optimism.io https://chainid.network https://rukh.w3hc.org",
+  "connect-src 'self' https://mainnet.optimism.io https://chainid.network https://rukh.w3hc.org https://unpkg.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
