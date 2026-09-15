@@ -954,7 +954,14 @@ const SettingsPage = () => {
           <BuildVerification />
 
           {/* Restore from Backup - Available without authentication */}
-          <Box bg="gray.900" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
+          <Box
+            id="restore-backup"
+            bg="gray.900"
+            p={6}
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="gray.700"
+          >
             <HStack mb={4}>
               <Icon as={FiUpload} color={brandColors.primary} boxSize={6} />
               <Heading size="md">Restore from Backup</Heading>

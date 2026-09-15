@@ -31,11 +31,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({
 
   // Validate password strength in real-time
   useEffect(() => {
-    if (password) {
-      setIsPasswordStrong(isStrongPassword(password))
-    } else {
-      setIsPasswordStrong(false)
-    }
+    setIsPasswordStrong(password ? isStrongPassword(password) : false)
   }, [password])
 
   const handleSubmit = async () => {
@@ -124,6 +120,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({
                   aria-describedby="password-requirements password-status"
                   aria-invalid={passwordTouched && !isPasswordStrong ? true : undefined}
                   autoFocus
+                  pl={3}
                 />
                 {passwordTouched && !isPasswordStrong && (
                   <Field.ErrorText id="password-status">
